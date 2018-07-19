@@ -14,6 +14,7 @@
 #include <CGAL/boost/graph/Face_filtered_graph.h>
 
 #include <CGAL/Polygon_mesh_processing/connected_components.h>
+#include <CGAL/Polygon_mesh_processing/stitch_borders.h>
 
 #include <boost/graph/connected_components.hpp>
 #include <boost/foreach.hpp>
@@ -81,7 +82,7 @@ void InputManager::readMeshFromOff(const std::string filename) {
 
     std::cout << "The MESH has " << num << " connected components (face connectivity): " << std::endl;
     for (int i = 0; i < num; i++) {
-        std::cout << "-- omponent " << i << " has ";
+        std::cout << "-- component " << i << " has ";
         CGAL::Face_filtered_graph<Mesh> ffg(mesh,i,fccmap);
         std::cout << num_faces(ffg) << " faces" << std::endl;
     }
@@ -92,7 +93,7 @@ void InputManager::readMeshFromOff(const std::string filename) {
     }*/
 }
 
-void InputManager::meshToGraphDual() {
+Graph InputManager::meshToGraphDual() {
     Mesh mesh = inputMesh;
     Dual dual(mesh);
     FiniteDual finiteDual(dual,noborder<Mesh>(mesh));
@@ -167,6 +168,7 @@ void InputManager::meshToGraphDual() {
         }
 
         boost::graph_traits<FiniteDual>::adjacency_iterator ai,ai_end;
+
         for (boost::tie(ai,ai_end)=adjacent_vertices(*vb,finiteDual);ai != ai_end; ++ai) {
             std::cout << "    " << (*ai) << std::endl;
         }
@@ -205,7 +207,7 @@ void InputManager::meshToGraphDual() {
             g[*vb].id = curr_vertex_idx;
         } else {
             std::cerr << "Existing vertex not found" << std::endl;
-            return;
+            return g;
         }
         for (boost::tie(ai,ai_end)=adjacent_vertices(*vb,finiteDual);ai != ai_end; ++ai) {
             if(face_map.find(*ai) != face_map.end())
@@ -222,4 +224,42 @@ void InputManager::meshToGraphDual() {
     boost::write_graphviz(dot_file,g,[&] (auto& out, auto v) {
         out << "[id=\"" << g[v].id << "\"]";
     });
+    return g;
+}
+
+void InputManager::breakMesh(Graph g) {
+    Mesh copy;
+    std::map<Point,boost::graph_traits<Mesh>::vertex_descriptor> newVertices;
+    int miao[3] = {1,1,0};
+    int i = 0;
+
+    for (auto face_iterator : inputMesh.faces()) {
+        if(!miao[i]) {
+            i++;
+            continue;
+        }
+        i++;
+        Mesh::Halfedge_index hf = inputMesh.halfedge(face_iterator);
+        std::vector<boost::graph_traits<Mesh>::vertex_descriptor> vrtcs;
+        for (Mesh::Halfedge_index hi : halfedges_around_face(hf,inputMesh)) {
+            std::cout << "Vertex index: " << target(hi,inputMesh) << std::endl;
+            Point p = inputMesh.point(target(hi,inputMesh));
+            if(newVertices.find(p)== newVertices.end()) {
+                vrtcs.push_back(copy.add_vertex(p));
+                newVertices.insert(std::make_pair(p,vrtcs.back()));
+            }
+            else {
+                vrtcs.push_back(newVertices[p]);
+            }
+        }
+        // Exploiting the concept of RANGE (from boost) we can use directly the container
+        copy.add_face(vrtcs);
+    }
+
+    boost::print_graph(copy);
+
+
+    std::cout << "miao" << std::endl;
+    std::ofstream outfile("oella.off");
+    outfile << copy;
 }

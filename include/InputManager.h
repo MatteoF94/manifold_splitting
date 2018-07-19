@@ -51,8 +51,9 @@ public:
     virtual ~InputManager();
 
     void readMeshFromOff(std::string filename);
-    void meshToGraphPrimal(Mesh mesh);
-    void meshToGraphDual();
+    Graph meshToGraphPrimal(Mesh mesh);
+    Graph meshToGraphDual();
+    void breakMesh(Graph g);
 
 private:
     Mesh inputMesh;
