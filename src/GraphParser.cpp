@@ -70,9 +70,9 @@ void GraphParser::convertDotToMetis(std::string filename) {
     std::ofstream outfile("miao.graph");
     outfile << numVertices << " " << numEdges << std::endl;
     for(std::pair<int,std::unordered_set<int>> element : graphMap) {
-        std::cout << element.first << " :: " << std::endl;
+        //std::cout << element.first << " :: " << std::endl;
         for (int elementIn : element.second) {
-            std::cout << " - - " << elementIn << std::endl;
+            //std::cout << " - - " << elementIn << std::endl;
             outfile << elementIn+1 << " ";
         }
         outfile << std::endl;
