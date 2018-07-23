@@ -14,7 +14,7 @@ add_executable(manifold_splitting
     include/InputManager.h
     include/types_reconstructor.hpp
     src/InputManager.cpp
-    main.cpp src/GraphParser.cpp include/GraphParser.h)
+    main.cpp src/GraphParser.cpp include/GraphParser.h src/KLabelPartitioner.cpp include/KLabelPartitioner.h)
 
 target_link_libraries(manifold_splitting
         ${CGAL_LIBRARY}
