@@ -33,7 +33,9 @@ void KLabelPartitioner::assignLabels(std::vector<int> labels) {
 void KLabelPartitioner::partitionRecursively() {
     boost::graph_traits<Graph>::vertex_descriptor firstVertex = *(mGraph.vertex_set().begin());
     mVertexGroupMap[firstVertex] = mMaxGroup;
+    boost::add_vertex(mReducedGraph);
     partitionRecursively(firstVertex);
+    boost::print_graph(mReducedGraph);
 }
 
 // TODO should i pass the descriptor or the iterator?
@@ -64,9 +66,11 @@ void KLabelPartitioner::partitionRecursively(boost::graph_traits<Graph>::vertex_
     for (nodes_no_priority_it = nodes_no_priority.begin(); nodes_no_priority_it != nodes_no_priority.end(); ++nodes_no_priority_it) {
         if(mVertexGroupMap[*nodes_no_priority_it] == -1) {
             ++mMaxGroup;
+            boost::add_vertex(mReducedGraph);
             mVertexGroupMap[*nodes_no_priority_it] = mMaxGroup;
             partitionRecursively(*nodes_no_priority_it);
         }
+        boost::add_edge(mVertexGroupMap[vd],mVertexGroupMap[*nodes_no_priority_it],mReducedGraph);
     }
 
     return;
@@ -89,6 +93,7 @@ void KLabelPartitioner::partitionCyclically () {
     boost::graph_traits<Graph>::adjacency_iterator ab,ae;
     current_snapshot.stage = 0;
     snapshot_list.push_back(current_snapshot);
+    boost::add_vertex(mReducedGraph);
 
     std::list<boost::graph_traits<Graph>::vertex_descriptor>::iterator nodes_priority_it;
     std::list<SnapShotStruct>::iterator snap_it = snapshot_list.begin();
@@ -138,17 +143,19 @@ void KLabelPartitioner::partitionCyclically () {
 
                     if (mVertexGroupMap[*snap_it->nodes_no_priority_it] == -1) {
                         ++mMaxGroup;
+                        boost::add_vertex(mReducedGraph);
                         mVertexGroupMap[*snap_it->nodes_no_priority_it] = mMaxGroup;
                         SnapShotStruct new_snapshot;
                         new_snapshot.stage = 0;
                         new_snapshot.descriptor = *snap_it->nodes_no_priority_it;
                         snapshot_list.push_back(new_snapshot);
+                        boost::add_edge(mVertexGroupMap[snap_it->descriptor],mVertexGroupMap[*snap_it->nodes_no_priority_it],mReducedGraph);
                         snap_it->nodes_no_priority_it++;
                         snap_it++;
                     } else {
+                        boost::add_edge(mVertexGroupMap[snap_it->descriptor],mVertexGroupMap[*snap_it->nodes_no_priority_it],mReducedGraph);
                         snap_it->nodes_no_priority_it++;
                     }
-
 
                 } else {
                     snap_it->stage = 2;
@@ -165,6 +172,8 @@ void KLabelPartitioner::partitionCyclically () {
                 break;
         }
     }
+
+    boost::print_graph(mReducedGraph);
 }
 
 void KLabelPartitioner::printGroups() {

@@ -4,15 +4,18 @@
 #include <stack>
 #include "include/InputManager.h"
 #include "include/GraphParser.h"
+#include "src/SpectralClustering/SpectralClustering.h"
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Dense>
 
-int main() {
-    InputManager inputManager;
+/*int main() {
+    //InputManager inputManager;
 
-    inputManager.readMeshFromOff("../data/bunny.off");
+    //inputManager.readMeshFromOff("../data/bunny.off");
     //inputManager.readMeshFromOff("./cube_quad.off");
-    Graph g = inputManager.meshToGraphDual();
+    //Graph g = inputManager.meshToGraphDual();
 
-    /*Graph g(11);
+    Graph g(11);
     boost::add_edge(0,4,g);
     boost::add_edge(0,7,g);
     boost::add_edge(0,10,g);
@@ -33,18 +36,37 @@ int main() {
     boost::add_edge(7,9,g);
     boost::add_edge(7,10,g);
     boost::add_edge(9,10,g);
-    boost::print_graph(g);*/
+    //boost::print_graph(g);
 
     KLabelPartitioner k_label_partitioner(g);
 
-    //std::vector<int> MIAO {1,1,2,3,3,2,3,1,3,1,1};
-    //k_label_partitioner.assignLabels(MIAO);
-    k_label_partitioner.partitionRecursively();
-    //k_label_partitioner.partitionCyclically();
+    std::vector<int> MIAO {1,1,2,3,3,2,3,1,3,1,1};
+    k_label_partitioner.assignLabels(MIAO);
+    //k_label_partitioner.partitionRecursively();
+    k_label_partitioner.partitionCyclically();
     //k_label_partitioner.printGroups();
 
     //GraphParser graphParser;
     //graphParser.convertDotToMetis("./miao.dot");
+
+    return 0;
+}*/
+
+int main() {
+    int size = 3;
+    Eigen::MatrixXf m = Eigen::MatrixXf::Zero(size,size);
+    for (unsigned int i=0; i < size; i++) {
+        for (unsigned int j=0; j < size; j++) {
+            // generate similarity
+                    int arg = pow(i-j,2);
+            float similarity = exp(-arg);
+            m(i,j) = similarity;
+            m(j,i) = similarity;
+        }
+    }
+    SpectralClustering mySpecter(m,1);
+    mySpecter.setupEigenvectors();
+    mySpecter.clusterKmeans(2);
 
     return 0;
 }

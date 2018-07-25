@@ -7,6 +7,7 @@
 
 
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/graph_utility.hpp>
 
 typedef boost::adjacency_list<boost::setS,boost::vecS,boost::undirectedS> Graph;
 
@@ -22,6 +23,7 @@ public:
 
 private:
     Graph mGraph;
+    Graph mReducedGraph;
     std::unordered_map<boost::graph_traits<Graph>::vertex_descriptor,int> mVertexLabelMap;
     std::unordered_map<boost::graph_traits<Graph>::vertex_descriptor,int> mVertexGroupMap;
     int mMaxGroup;
