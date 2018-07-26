@@ -56,25 +56,28 @@ void SpectralClustering::setupEigenvectors(){
         mEigenVectors = eigenvectors;
     }
 
-    mEigenVectors.rowwise().normalize();
+    //mEigenVectors.rowwise().normalize();
     std::cout << mEigenVectors << std::endl;
 }
 
 cv::Mat SpectralClustering::clusterKmeans(int num_clusters) {
     // Prepare elements
+    //std::cout << mEigenVectors.rows() << std::endl;
+    //std::cout << mEigenVectors.cols() << std::endl;
     auto num_elements = static_cast<int>(mEigenVectors.rows());
     auto num_features = static_cast<int>(mEigenVectors.cols());
     cv::Mat data(num_elements,num_features,CV_32F);
 
     cv::eigen2cv(mEigenVectors,data);
 
-    std::cout << "My data: " << data << std::endl;
+    //std::cout << "My data: " << data << std::endl;
 
     int clusterCount = num_clusters;
     cv::Mat labels;
-    int attempts = 25;
+    int attempts = 50;
     cv::Mat centers;
     kmeans(data, clusterCount, labels, cv::TermCriteria(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS, 10000, 0.0001), attempts, cv::KMEANS_PP_CENTERS, centers );
+    std::cout << "LABELS: " << std::endl;
     for (int i = 0; i < num_elements; i++) {
         std::cout << labels.at<int>(i) << std::endl;
     }

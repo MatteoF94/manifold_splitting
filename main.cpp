@@ -42,9 +42,9 @@
 
     std::vector<int> MIAO {1,1,2,3,3,2,3,1,3,1,1};
     k_label_partitioner.assignLabels(MIAO);
-    //k_label_partitioner.partitionRecursively();
-    k_label_partitioner.partitionCyclically();
-    //k_label_partitioner.printGroups();
+    //k_label_partitioner.clusterRecursively();
+    k_label_partitioner.clusterCyclically();
+    //k_label_partitioner.printClusters();
 
     //GraphParser graphParser;
     //graphParser.convertDotToMetis("./miao.dot");

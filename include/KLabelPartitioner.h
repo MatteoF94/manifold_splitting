@@ -11,15 +11,22 @@
 
 typedef boost::adjacency_list<boost::setS,boost::vecS,boost::undirectedS> Graph;
 
+struct VertexInfo {
+    int label;
+    std::vector<int> nodes;
+    std::vector<int> adjacent_groups;
+};
+
 class KLabelPartitioner {
 public:
     KLabelPartitioner(Graph graph);
     virtual ~KLabelPartitioner();
 
     void assignLabels(std::vector<int> labels);
-    void partitionRecursively();
-    void partitionCyclically ();
-    void printGroups();
+    void clusterRecursively();
+    void clusterCyclically();
+    std::vector<VertexInfo> createClusters();
+    void printClusters();
 
 private:
     Graph mGraph;
@@ -27,6 +34,7 @@ private:
     std::unordered_map<boost::graph_traits<Graph>::vertex_descriptor,int> mVertexLabelMap;
     std::unordered_map<boost::graph_traits<Graph>::vertex_descriptor,int> mVertexGroupMap;
     int mMaxGroup;
+    std::vector<VertexInfo> mReducedGraphNodes;
 
     void partitionRecursively(boost::graph_traits<Graph>::vertex_descriptor vd);
 };

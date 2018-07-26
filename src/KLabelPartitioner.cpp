@@ -30,7 +30,7 @@ void KLabelPartitioner::assignLabels(std::vector<int> labels) {
     }
 }
 
-void KLabelPartitioner::partitionRecursively() {
+void KLabelPartitioner::clusterRecursively() {
     boost::graph_traits<Graph>::vertex_descriptor firstVertex = *(mGraph.vertex_set().begin());
     mVertexGroupMap[firstVertex] = mMaxGroup;
     boost::add_vertex(mReducedGraph);
@@ -76,7 +76,7 @@ void KLabelPartitioner::partitionRecursively(boost::graph_traits<Graph>::vertex_
     return;
 }
 
-void KLabelPartitioner::partitionCyclically () {
+void KLabelPartitioner::clusterCyclically() {
 
     struct SnapShotStruct {
         boost::graph_traits<Graph>::vertex_descriptor descriptor;
@@ -176,7 +176,34 @@ void KLabelPartitioner::partitionCyclically () {
     boost::print_graph(mReducedGraph);
 }
 
-void KLabelPartitioner::printGroups() {
+std::vector<VertexInfo> KLabelPartitioner::createClusters() {
+    int num_groups = static_cast<int>(boost::num_vertices(mReducedGraph));
+
+    for (int i = 0; i < num_groups; i++) {
+        VertexInfo tmp_node = VertexInfo();
+        mReducedGraphNodes.push_back(tmp_node);
+    }
+
+    boost::graph_traits<Graph>::vertex_iterator vb,ve;
+    for(boost::tie(vb,ve) = vertices(mGraph); vb != ve; ++vb) {
+        int curr_group = mVertexGroupMap[*vb];
+        mReducedGraphNodes.at(curr_group).nodes.push_back(*vb);
+    }
+
+    for (int i = 0; i < num_groups; i++) {
+        int curr_label = mVertexLabelMap[mReducedGraphNodes.at(i).nodes.at(0)];
+        mReducedGraphNodes.at(i).label = curr_label;
+
+        boost::graph_traits<Graph>::adjacency_iterator ab,ae;
+        for(boost::tie(ab,ae) = boost::adjacent_vertices(i,mReducedGraph); ab != ae; ++ab) {
+            mReducedGraphNodes.at(i).adjacent_groups.push_back(*ab);
+        }
+    }
+
+    return mReducedGraphNodes;
+}
+
+void KLabelPartitioner::printClusters() {
     std::unordered_map<boost::graph_traits<Graph>::vertex_descriptor,int>::iterator map_it;
     for(map_it = mVertexGroupMap.begin(); map_it != mVertexGroupMap.end(); ++map_it) {
         std::cout << "Vertex " << map_it->first << " in group " << map_it->second << std::endl;
