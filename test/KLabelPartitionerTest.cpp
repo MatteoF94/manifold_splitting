@@ -139,7 +139,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    cv::Mat src = cv::imread("../../data/KLabelPartitionerTest/000120_10.png");
+    /*cv::Mat src = cv::imread("../../data/KLabelPartitionerTest/000120_10.png");
     Graph g = graphFromImage(src);
 
     std::vector<VertexInfo> phase1_clusters = clusterByLabel(g);
@@ -212,5 +212,13 @@ int main(int argc, char* argv[]) {
         std::stringstream file_path;
         file_path << path << "/000120_10_" << std::to_string(j) << ".png";
         cv::imwrite(file_path.str().c_str(),out_img);
-    }
+    }*/
+
+    /*Eigen::MatrixXf test_labels = Eigen::MatrixXf::Identity(3,3);
+    int num_clusters = 2;
+    SpectralClustering spectral_clustering(test_labels,2);
+    spectral_clustering.setupEigenvectors();
+    cv::Mat phase2_labels = spectral_clustering.clusterKmeans(num_clusters);
+    VertexInfo phase2_clusters[num_clusters];*/
+    system("/home/matteo/GithubRepos/KaHIP-master/deploy/kaffpa /home/matteo/Desktop/gatto.graph --k 2 --preconfiguration=strong --output_filename /home/matteo/CLionProjects/manifold_splitting/include/miao.txt");
 }

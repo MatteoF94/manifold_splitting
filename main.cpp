@@ -51,9 +51,10 @@
 
     return 0;
 }*/
+#include <boost/filesystem.hpp>
 
 int main() {
-    int size = 3;
+    /*int size = 3;
     Eigen::MatrixXf m = Eigen::MatrixXf::Zero(size,size);
     for (unsigned int i=0; i < size; i++) {
         for (unsigned int j=0; j < size; j++) {
@@ -66,7 +67,5 @@ int main() {
     }
     SpectralClustering mySpecter(m,1);
     mySpecter.setupEigenvectors();
-    mySpecter.clusterKmeans(2);
-
-    return 0;
+    mySpecter.clusterKmeans(2);*/
 }

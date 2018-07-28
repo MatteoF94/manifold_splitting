@@ -54,7 +54,7 @@ public:
     void readMeshFromOff(std::string filename);
     Graph meshToGraphPrimal(Mesh mesh);
     Graph meshToGraphDual();
-    void breakMesh(int numParts, std::string divisionFileName);
+    void breakMesh(int numParts, std::string divisionFileName, std::string output_filename);
 
 private:
     Mesh inputMesh;

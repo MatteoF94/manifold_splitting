@@ -56,7 +56,7 @@ void SpectralClustering::setupEigenvectors(){
         mEigenVectors = eigenvectors;
     }
 
-    //mEigenVectors.rowwise().normalize();
+    mEigenVectors.rowwise().normalize();
     std::cout << mEigenVectors << std::endl;
 }
 

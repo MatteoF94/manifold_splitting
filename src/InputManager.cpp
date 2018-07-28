@@ -233,17 +233,13 @@ Graph InputManager::meshToGraphDual() {
     std::cout << "\tDONE -- graph has " << boost::num_edges(g) << " edges" << std::endl;
     std::cout << "DONE -- GRAPH CREATED" << std::endl << std::endl;
 
-
-    //boost::print_graph(g);
-    std::ofstream dot_file("miao.dot");
-    boost::write_graphviz(dot_file,g);
     /*boost::write_graphviz(dot_file,g,[&] (auto& out, auto v) {
         out << "[id=\"" << g[v].id << "\"]";
     });*/
     return g;
 }
 
-void InputManager::breakMesh(int numParts, std::string divisionFileName) {
+void InputManager::breakMesh(int numParts, std::string divisionFileName, std::string output_filename) {
     Mesh splittedMeshes[numParts];
     std::map<Point,boost::graph_traits<Mesh>::vertex_descriptor> newVertices[numParts];
     std::vector<int> flags;
@@ -274,7 +270,7 @@ void InputManager::breakMesh(int numParts, std::string divisionFileName) {
         boost::graph_traits<Mesh>::halfedge_descriptor hf = halfedge(*face_iterator,inputMesh);
         std::vector<boost::graph_traits<Mesh>::vertex_descriptor> vrtcs;
         for (Mesh::Halfedge_index hi : halfedges_around_face(hf,inputMesh)) {
-            std::cout << "Vertex index: " << target(hi,inputMesh) << std::endl;
+            //std::cout << "Vertex index: " << target(hi,inputMesh) << std::endl;
             Point p = inputMesh.point(target(hi,inputMesh));
             if(newVertices[currMeshIdx].find(p)== newVertices[currMeshIdx].end()) {
                 vrtcs.push_back(splittedMeshes[currMeshIdx].add_vertex(p));
@@ -308,7 +304,7 @@ void InputManager::breakMesh(int numParts, std::string divisionFileName) {
         std::cout << "Printing sub-graph " << i << ":" << std::endl;
         //boost::print_graph(splittedMeshes[i]);
         std::stringstream ss;
-        ss << "mesh_part_" << i << ".off";
+        ss << output_filename << "_" << i << ".off";
         std::ofstream outfile(ss.str());
         outfile << splittedMeshes[i];
     }
