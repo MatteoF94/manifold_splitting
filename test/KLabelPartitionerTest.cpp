@@ -14,6 +14,7 @@
 #include <eigen3/Eigen/Core>
 #include <SpectralClustering.h>
 #include <dirent.h>
+#include <stopwatch.h>
 
 Graph graphFromImage(cv::Mat image) {
     auto num_rows = static_cast<unsigned int>(image.rows);
@@ -129,7 +130,9 @@ Eigen::MatrixXf createTestSimilarityMatrix() {
 
 int main(int argc, char* argv[]) {
 
-    bool show_phase1_clustering = false;
+    /*bool show_phase1_clustering = false;
+    Stopwatch stopwatch;
+    double elapsed, total_time = 0;
     if (argc == 2) {
         if(std::string(argv[1]) == "--SHOW_PHASE1")
             show_phase1_clustering = true;
@@ -139,10 +142,21 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    /*cv::Mat src = cv::imread("../../data/KLabelPartitionerTest/000120_10.png");
-    Graph g = graphFromImage(src);
+    cv::Mat src = cv::imread("../../data/KLabelPartitionerTest/000120_10.png");
 
+    std::cout << "Creating the graph from image pixels..." << std::endl;
+    stopwatch.start();
+    Graph g = graphFromImage(src);
+    elapsed = stopwatch.stop();
+    total_time = total_time + elapsed;
+    std::cout << "DONE in " << elapsed << " seconds" << std::endl << std::endl;
+
+    std::cout << "K-Label clustering (cyclical way)..." << std::endl;
+    stopwatch.start();
     std::vector<VertexInfo> phase1_clusters = clusterByLabel(g);
+    elapsed = stopwatch.stop();
+    total_time = total_time + elapsed;
+    std::cout << "DONE in " << elapsed << " seconds" << std::endl << std::endl;
 
     if(show_phase1_clustering)
         showPhase1Clusters(src,phase1_clusters);
@@ -155,6 +169,8 @@ int main(int argc, char* argv[]) {
     // Create the similarity matrix for the clusters computed by the first phase of the algorithm
     Eigen::MatrixXf test_labels = Eigen::MatrixXf::Identity(phase1_clusters.size(),phase1_clusters.size());
 
+    std::cout << "Creating similarity matrix..." << std::endl;
+    stopwatch.start();
     for (int i = 0; i < phase1_clusters.size(); i++) {
         VertexInfo curr_group = phase1_clusters.at(i);
         for (int elem: curr_group.adjacent_groups) {
@@ -166,20 +182,34 @@ int main(int argc, char* argv[]) {
 
         }
     }
+    elapsed = stopwatch.stop();
+    total_time = total_time + elapsed;
+    std::cout << "DONE in " << elapsed << " seconds" << std::endl << std::endl;
 
     // Compute spectral clustering as second phase
     int num_clusters = 10;
+    std::cout << "Spectral clustering, K = " << num_clusters << "..." << std::endl;
+    stopwatch.start();
     SpectralClustering spectral_clustering(test_labels,num_clusters);
     spectral_clustering.setupEigenvectors();
     cv::Mat phase2_labels = spectral_clustering.clusterKmeans(num_clusters);
+    elapsed = stopwatch.stop();
+    total_time = total_time + elapsed;
+    std::cout << "DONE in " << elapsed << " seconds" << std::endl << std::endl;
+
     VertexInfo phase2_clusters[num_clusters];
 
     // Create the new clusters
+    std::cout << "Cluster creation..." << std::endl;
+    stopwatch.start();
     for (int i = 0; i < phase1_clusters.size(); i++) {
         VertexInfo curr_vertex = phase1_clusters.at(i);
         int curr_group =  phase2_labels.at<int>(i);
         phase2_clusters[curr_group].nodes.insert(phase2_clusters[curr_group].nodes.end(),curr_vertex.nodes.begin(),curr_vertex.nodes.end());
     }
+    elapsed = stopwatch.stop();
+    total_time = total_time + elapsed;
+    std::cout << "DONE in " << elapsed << " seconds" << std::endl << std::endl;
 
     // Save clusters as images (they are groups of pixels after all!)
     // Clear the output directory
@@ -212,13 +242,19 @@ int main(int argc, char* argv[]) {
         std::stringstream file_path;
         file_path << path << "/000120_10_" << std::to_string(j) << ".png";
         cv::imwrite(file_path.str().c_str(),out_img);
-    }*/
+    }
+
+    std::cout << "Total elapsed time: " << total_time << " seconds" << std::endl;*/
 
     /*Eigen::MatrixXf test_labels = Eigen::MatrixXf::Identity(3,3);
-    int num_clusters = 2;
-    SpectralClustering spectral_clustering(test_labels,2);
+    SpectralClustering spectral_clustering(test_labels,3);
     spectral_clustering.setupEigenvectors();
-    cv::Mat phase2_labels = spectral_clustering.clusterKmeans(num_clusters);
-    VertexInfo phase2_clusters[num_clusters];*/
-    system("/home/matteo/GithubRepos/KaHIP-master/deploy/kaffpa /home/matteo/Desktop/gatto.graph --k 2 --preconfiguration=strong --output_filename /home/matteo/CLionProjects/manifold_splitting/include/miao.txt");
+    cv::Mat phase2_labels = spectral_clustering.clusterKmeans(3);*/
+
+    cv::Mat_<float> miao, miaone(1024,768);
+    //cv::resize(miao,miao,cv::Size(1024,768),0,0,cv::INTER_LINEAR);
+    miao = miaone.clone();
+    std::cout << miao.rows << std::endl;
+    std::cout << miao.cols << std::endl;
+
 }
