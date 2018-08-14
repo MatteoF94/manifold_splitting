@@ -98,11 +98,12 @@ int main (int argc, char* argv[]) {
         i++;
     }
 
-    int thresh = i / 2;
+    int thresh = i / 8;
     MultiTreePartitioner partitioner;
+    partitioner.configParameters(5,thresh,30);
     Stopwatch stopwatch;
     stopwatch.start();
-    partitioner.partitionByNumber(copy,thresh);
+    partitioner.partitionByNumber(copy);
     double elapsed = stopwatch.stop();
     std::cout << elapsed << std::endl;
 
