@@ -239,7 +239,7 @@ Graph InputManager::meshToGraphDual() {
     return g;
 }
 
-MultiTreeNode* InputManager::meshToMultiTree() {
+MultiTreeNode* InputManager::meshToMultiTree(int mode, int depth) {
 
     Dual dual(inputMesh);
     FiniteDual finiteDual(dual,noborder<Mesh>(inputMesh));
@@ -268,7 +268,10 @@ MultiTreeNode* InputManager::meshToMultiTree() {
         boost::graph_traits<FiniteDual>::adjacency_iterator ai,ai_end;
         MultiTreeNode* front_element = tree_queue.front();
 
+        std::vector<MultiTreeNode*> tmp_queue;
+
         int state = 0;
+
         for (boost::tie(ai,ai_end)=boost::adjacent_vertices(front_element->id,finiteDual);ai != ai_end; ++ai) {
             if(!inserted_map.at(*ai)) {
                 inserted_map.at(*ai) = true;
@@ -297,25 +300,129 @@ MultiTreeNode* InputManager::meshToMultiTree() {
 
                 cursor = curr_node;
                 node_map.insert({*ai,curr_node});
-                tree_queue.push(curr_node);
+                if(mode)
+                    tmp_queue.push_back(curr_node);
+                else
+                    tree_queue.push(curr_node);
             }
             else if (front_element->parent != nullptr) {
                 MultiTreeNode* old_node = node_map.at(*ai);
 
-                if(old_node->parent == front_element->parent) {
+                /*if(old_node->parent == front_element->parent) {
                     front_element->siblings.push_back(old_node);
-                    continue;
-                }
-                if(front_element->level - old_node->level < 10 && front_element->level - old_node->level >= 0 && front_element->parent != old_node)
+                }*/
+                if(front_element->level - old_node->level < depth && front_element->level - old_node->level >= 0 && front_element->parent != old_node)
                     old_node->relatives.push_back(front_element);
             }
         }
 
+        if(mode) {
+            std::reverse(tmp_queue.begin(), tmp_queue.end());
+            for(auto &node : tmp_queue)
+                tree_queue.push(node);
+        }
         tree_queue.pop();
     }
 
     return root;
 }
+
+MultiTreeNode* InputManager::meshToMultiTree(int depth) {
+
+    Dual dual(inputMesh);
+    FiniteDual finiteDual(dual,noborder<Mesh>(inputMesh));
+    boost::graph_traits<FiniteDual>::vertex_iterator vb,ve;
+    boost::tie(vb,ve) = boost::vertices(finiteDual);
+
+    std::map<int,bool> inserted_map;
+    for(int i = 0; i < boost::num_vertices(finiteDual); i++) {
+        inserted_map.insert({i,false});
+    }
+
+    std::unordered_map<boost::graph_traits<FiniteDual>::vertex_descriptor, MultiTreeNode*> node_map;
+    std::vector<MultiTreeNode*> tree_queue;
+    MultiTreeNode* root = new MultiTreeNode;
+    root->level = 0;
+    root->value = 1;
+    root->id = *vb;
+
+    node_map.insert({*vb,root});
+    tree_queue.push_back(root);
+
+    inserted_map.at(*vb) = true;
+    MultiTreeNode* cursor = tree_queue.front();
+
+    bool flip_state = false;
+    int mode = 0;
+
+    while (!tree_queue.empty()) {
+        boost::graph_traits<FiniteDual>::adjacency_iterator ai,ai_end;
+        MultiTreeNode* front_element = tree_queue.front();
+
+        std::vector<MultiTreeNode*> tmp_queue;
+
+        int state = 0;
+
+        for (boost::tie(ai,ai_end)=boost::adjacent_vertices(front_element->id,finiteDual);ai != ai_end; ++ai) {
+            if(!inserted_map.at(*ai)) {
+                inserted_map.at(*ai) = true;
+
+                auto *curr_node = new MultiTreeNode;
+                curr_node->id = *ai;
+                curr_node->parent = front_element;
+                curr_node->level = curr_node->parent->level + 1;
+
+                curr_node->prev = cursor;
+                curr_node->prev->next = curr_node;
+
+                state++;
+
+                switch (state) {
+                    case 1:
+                        curr_node->parent->left = curr_node;
+                        break;
+                    case 2:
+                        curr_node->parent->right = curr_node;
+                        break;
+                    default:
+                        curr_node->parent->mid = curr_node; // Reached only for the root...
+                        break;
+                }
+
+                cursor = curr_node;
+                node_map.insert({*ai,curr_node});
+                if(mode)
+                    tmp_queue.push_back(curr_node);
+                else
+                    tree_queue.push_back(curr_node);
+            }
+            else if (front_element->parent != nullptr) {
+                MultiTreeNode* old_node = node_map.at(*ai);
+
+                /*if(old_node->parent == front_element->parent) {
+                    front_element->siblings.push_back(old_node);
+                }*/
+                if(front_element->level - old_node->level < depth && front_element->level - old_node->level >= 0 && front_element->parent != old_node)
+                    old_node->relatives.push_back(front_element);
+            }
+        }
+
+        if(mode) {
+            std::reverse(tmp_queue.begin(), tmp_queue.end());
+            for(auto &node : tmp_queue)
+                tree_queue.push_back(node);
+        }
+        int curr_level = front_element->level;
+        tree_queue.erase(tree_queue.begin());
+        if(tree_queue.front()->level != curr_level && front_element->prev != nullptr) {
+            std::reverse(tree_queue.begin(),tree_queue.end());
+            mode = (mode) ? 0 : 1;
+        }
+    }
+
+    return root;
+}
+
 
 void InputManager::breakMesh(int numParts, std::string divisionFileName, std::string output_filename) {
     Mesh splittedMeshes[numParts];

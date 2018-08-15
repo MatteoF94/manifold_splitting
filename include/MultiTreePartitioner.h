@@ -11,8 +11,8 @@ class MultiTreePartitioner {
 public:
     MultiTreePartitioner();
 
-    std::vector<int> partitionByNumber(MultiTreeNode* last);
-    void configParameters(int search_depth, int threshold, int epsilon);
+    std::vector<int> partitionByNumber(MultiTreeNode* last, MultiTreeNode* root, int num_elements);
+    void configParameters(int search_depth, int threshold, int epsilon, int num_partitions);
 
 private:
     enum LinkageState {CUT,UNSUCCESFUL};
@@ -28,6 +28,7 @@ private:
     int mDepth;
     int mThreshold;
     int mEpsilon;
+    int mNumPartitions;
 
 
 };

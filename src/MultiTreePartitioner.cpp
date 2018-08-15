@@ -7,11 +7,12 @@
 #include <stack>
 #include "MultiTreePartitioner.h"
 
-MultiTreePartitioner::MultiTreePartitioner() : mDepth(0), mThreshold(0), mEpsilon(10){}
+MultiTreePartitioner::MultiTreePartitioner() : mDepth(0), mThreshold(0), mEpsilon(10), mNumPartitions(1){}
 
-void MultiTreePartitioner::configParameters(int search_depth, int threshold, int epsilon) {
+void MultiTreePartitioner::configParameters(int search_depth, int threshold, int epsilon, int num_partitions) {
     mDepth = search_depth;
     mThreshold = threshold;
+    mNumPartitions = num_partitions;
 
     if(epsilon >= 0 && epsilon <= 100)
         mEpsilon = epsilon;
@@ -19,45 +20,31 @@ void MultiTreePartitioner::configParameters(int search_depth, int threshold, int
         std::cerr << "Epsilon should be in range [0,100], using default (10)." << std::endl;
 }
 
-std::vector<int> MultiTreePartitioner::partitionByNumber(MultiTreeNode *last) {
-
+std::vector<int> MultiTreePartitioner::partitionByNumber(MultiTreeNode *last, MultiTreeNode* root, int num_elements) {
+    mNumGroups = 0;
     MultiTreeNode* curr_node = last;
-    MultiTreeNode* mi;
-    std::vector<int>* miao = new std::vector<int>(69666);
-    for(int i = 0; i < miao->size(); i++) miao->at(i) = -1;
+    std::vector<int>* group_ids = new std::vector<int>(num_elements,-1);
 
+    // Going backward, propagate the node value and cut if necessary
     while (curr_node != nullptr) {
 
+        // If there are already been k-1 cuts, the last one is mandatorily in the root, skipping the remaining nodes
+        if(mNumGroups == mNumPartitions - 1) {
+            cutTree(root,group_ids);
+            break;
+        }
+
+        // Skip the node if it is invalid (already cut)
         if (!curr_node->valid) {
             curr_node = curr_node->prev;
             continue;
         }
 
-        if(mNumGroups == 7){
-            if(curr_node->parent == nullptr) {
-                cutTree(curr_node, miao);
-            } else {
-                curr_node->parent->value = curr_node->parent->value + curr_node->value;
-                curr_node->propagated = true;
-            }
-            curr_node = curr_node->prev;
-            continue;
-        }
-
-        // Check for sibling possible over thresholding
-        /*for (int i = 0; i < curr_node->siblings.size(); i++) {
-            if (curr_node->value + curr_node->siblings.at(i)->value >= mThreshold) {
-                cutTree(curr_node,miao);
-                mNumGroups++;
-                mode = 1;
-                break;
-            }
-        }*/
-
         // Check for relatives, but only above a certain value
         if (curr_node->value >= mThreshold / 3) {
+
             // If the search has been successful, a partition has been found and we can skip to the next item
-            if (checkRelatives(curr_node, miao) == MultiTreePartitioner::CUT) {
+            if (checkRelatives(curr_node, group_ids) == MultiTreePartitioner::CUT) {
                 curr_node = curr_node->prev;
                 continue;
             }
@@ -70,8 +57,8 @@ std::vector<int> MultiTreePartitioner::partitionByNumber(MultiTreeNode *last) {
             if (curr_node->prev->parent == curr_node->parent) {
                 if (curr_node->prev->value + curr_node->value > mThreshold * (1.0 + double(mEpsilon) / 100.0)) {
                     MultiTreeNode *max = curr_node->value > curr_node->prev->value ? curr_node : curr_node->prev;
-                    cutTree(max, miao);
-                    if(mNumGroups < 7) mNumGroups++;
+                    cutTree(max, group_ids);
+                    mNumGroups++;
 
                     if(max != curr_node)
                         curr_node->parent->value = curr_node->parent->value + curr_node->value;
@@ -86,8 +73,8 @@ std::vector<int> MultiTreePartitioner::partitionByNumber(MultiTreeNode *last) {
 
         // If the current node is the root or exceeds the threshold, then cut
         if (curr_node->value >= mThreshold) {
-            cutTree(curr_node, miao);
-            if (mNumGroups < 7) {
+            cutTree(curr_node, group_ids);
+            if (mNumGroups < mNumPartitions - 1) {
                 mNumGroups++;
             }
         } else {
@@ -95,31 +82,16 @@ std::vector<int> MultiTreePartitioner::partitionByNumber(MultiTreeNode *last) {
             curr_node->propagated = true;
         }
 
-        if(curr_node->prev == nullptr)
-            mi = curr_node;
-
         curr_node = curr_node->prev;
     }
 
-    // Curr node is now root
-    /*int i = 0;
-    curr_node = mi;
-    while (curr_node != nullptr) {
-        //std::cout << "Node " << curr_node->id << ", #children " << curr_node->value-1 << std::endl;
+    curr_node = root;
+    /*while(curr_node->next != nullptr) {
+        if (group_ids->at(curr_node->id) == -1)
+            std::cout << "cazzo?" << std::endl;
         curr_node = curr_node->next;
-        i++;
     }*/
-
-    std::vector<int> num_elem;
-    for (int j = 0; j < 8; j++) num_elem.push_back(0);
-    for (int j = 0; j < miao->size(); j++) {
-        if(miao->at(j) != -1)
-        num_elem.at(miao->at(j))++;
-    }
-
-    for (int j = 0; j < 8; j++)
-        std::cout << "C" << j << ": " << num_elem.at(j) << std::endl;
-    return *miao;
+    return *group_ids;
 }
 
 MultiTreePartitioner::LinkageState MultiTreePartitioner::checkRelatives(MultiTreeNode* node, std::vector<int>* groups) {
@@ -150,7 +122,7 @@ MultiTreePartitioner::LinkageState MultiTreePartitioner::checkRelatives(MultiTre
             propagateValueCut(i);
             cutTree(i, groups);
         }
-        if(mNumGroups < 7) {
+        if(mNumGroups < mNumPartitions - 1) {
             mNumGroups++;
         }
         return MultiTreePartitioner::CUT; // tree has been cut

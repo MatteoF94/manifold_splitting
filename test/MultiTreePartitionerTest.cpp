@@ -8,103 +8,45 @@
 
 int main (int argc, char* argv[]) {
 
-    /*MultiTreeNode* node = new MultiTreeNode;
-    node->value = 1;
-    node->id = 0;
-    node->level = 0;
-    MultiTreeNode* node1 = new MultiTreeNode;
-    node1->value = 1;
-    node1->id = 1;
-    node1->level = 1;
-    MultiTreeNode* node2 = new MultiTreeNode;
-    node2->value = 1;
-    node2->id = 2;
-    node2->level = 1;
-    MultiTreeNode* node3 = new MultiTreeNode;
-    node3->value = 1;
-    node3->id = 3;
-    node3->level = 2;
-    MultiTreeNode* node4 = new MultiTreeNode;
-    node4->value = 1;
-    node4->id = 4;
-    node4->level = 2;
-
-    node->prev = nullptr;
-    node->next = node1;
-    node1->prev = node;
-    node1->next = node2;
-    node2->prev = node1;
-    node2->next = node3;
-    node3->prev = node2;
-    node3->next = node4;
-    node4->prev = node3;
-    node4->next = nullptr;
-
-    node->left = node1;
-    node->right = node2;
-    node1->left = nullptr;
-    node1->right = nullptr;
-    node2->left = node3;
-    node2->right = node4;
-    node3->left = nullptr;
-    node3->right = nullptr;
-    node4->left = nullptr;
-    node4->right = nullptr;
-
-    node->parent = nullptr;
-    node1->parent = node;
-    node2->parent = node;
-    node3->parent = node2;
-    node4->parent = node2;
-
-    MultiTreePartitioner partitioner;
-    partitioner.partitionByNumber(node4);*/
+    Stopwatch stopwatch;
+    double elapsed_time = 0.0;
 
     InputManager input_manager;
-    std::string input_filename = "../../data/WatermarkingBenchmark/bunny.off";//full_border_quads.off";
+    std::string input_filename = "../../data/WatermarkingBenchmark/bunny.off";
     input_manager.readMeshFromOff(input_filename);
 
-    MultiTreeNode* root = input_manager.meshToMultiTree();
-    MultiTreeNode* copy = root;
-    /*while(copy != nullptr) {
-        std::cout << "ID: " << copy->id << std::endl;
-        std::cout << "Level: " << copy->level << std::endl;
-        if(copy->parent != nullptr)
-            std::cout << "Parent ID: " << copy->parent->id << std::endl;
-        if(copy->left != nullptr)
-            std::cout << "Left ID: " << copy->left->id << std::endl;
-        if(copy->right != nullptr)
-            std::cout << "Right ID: " << copy->right->id << std::endl;
-        if(copy->mid != nullptr)
-            std::cout << "Mid ID: " << copy->mid->id << std::endl;
-        if(copy->next != nullptr)
-            std::cout << "Next ID: " << copy->next->id << std::endl;
-        if(copy->prev != nullptr)
-            std::cout << "Prev ID: " << copy->prev->id << std::endl;
-        std::cout << "Siblings: " << std::endl;
-        for (int i = 0; i < copy->siblings.size(); i++) {
-            std::cout << "\t" << copy->siblings.at(i)->id << std::endl;
-        }
-        std::cout << "Relatives: " << std::endl;
-        for (int i = 0; i < copy->relatives.size(); i++) {
-            std::cout << "\t" << copy->relatives.at(i)->id << std::endl;
-        }
-        std::cout << std::endl;
-        copy = copy->next;
-    }*/
-    int i = 1;
-    while (copy->next != nullptr) {
-        copy = copy->next;
-        i++;
+    std::cout << "\nConverting mesh to multi level tree..." << std::endl;
+    stopwatch.start();
+    MultiTreeNode* root = input_manager.meshToMultiTree(0,100);
+    elapsed_time = stopwatch.stop();
+    std::cout << "DONE in " << elapsed_time << " seconds" << std::endl << std::endl;
+
+    MultiTreeNode* last = root;
+    int num_nodes = 1;
+    while (last->next != nullptr) {
+        last = last->next;
+        num_nodes++;
     }
 
-    int thresh = i / 8;
+    int K = 8;
+    int thresh = num_nodes / K;
     MultiTreePartitioner partitioner;
-    partitioner.configParameters(5,thresh,30);
-    Stopwatch stopwatch;
-    stopwatch.start();
-    partitioner.partitionByNumber(copy);
-    double elapsed = stopwatch.stop();
-    std::cout << elapsed << std::endl;
+    partitioner.configParameters(0,thresh,30,K);
 
+    std::cout << "Partitioning tree..." << std::endl;
+    stopwatch.start();
+    std::vector<int> group_ids = partitioner.partitionByNumber(last, root, num_nodes);
+    elapsed_time = stopwatch.stop();
+    std::cout << "DONE in " << elapsed_time << " seconds" << std::endl << std::endl;
+
+    std::cout << "Partitioning results: " << std::endl;
+    std::vector<int> num_elem(K,0);
+
+    for (int group_id : group_ids) {
+        if(group_id != -1)
+            num_elem.at(group_id)++;
+    }
+
+    for (int j = 0; j < K; j++)
+        std::cout << "C" << j << ": " << num_elem.at(j) << std::endl;
 }

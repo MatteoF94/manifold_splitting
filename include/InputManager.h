@@ -33,7 +33,8 @@ public:
     Graph meshToGraphDual();
     void breakMesh(int numParts, std::string divisionFileName, std::string output_filename);
 
-    MultiTreeNode* meshToMultiTree();
+    MultiTreeNode* meshToMultiTree(int mode, int depth);
+    MultiTreeNode* meshToMultiTree(int depth);
 
 private:
     Mesh inputMesh;
