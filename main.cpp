@@ -52,6 +52,10 @@
     return 0;
 }*/
 #include <boost/filesystem.hpp>
+#include <MeshManager.h>
+#include <MultiTreeManager.h>
+#include <stopwatch.h>
+#include <CGAL/Polygon_mesh_processing/stitch_borders.h>
 
 int main() {
     /*int size = 3;
@@ -68,4 +72,43 @@ int main() {
     SpectralClustering mySpecter(m,1);
     mySpecter.setupEigenvectors();
     mySpecter.clusterKmeans(2);*/
+
+    InputManager miao;
+    miao.readMeshFromOff("../data/WatermarkingBenchmark/bunny.off");
+    /*MeshManager manager;
+    Stopwatch stopwatch;
+    stopwatch.start();
+    manager.computeFacesArea(miao.getMesh());
+    manager.meshToGraph(miao.getMesh());
+    double elapsed = stopwatch.stop();
+    std::cout << "Dual graph created in: " << elapsed << " seconds" << std::endl;
+    stopwatch.start();
+    manager.breakMesh(miao.getMesh(),"../data/WatermarkingBenchmark/bunny.txt");
+    elapsed = stopwatch.stop();
+    std::cout << "Mesh broken in: " << elapsed << " seconds" << std::endl;*/
+
+    /*CGAL::Surface_mesh<Point> mesh;
+    CGAL::Polygon_mesh_processing::stitch_borders(mesh);*/
+
+    MultiTreeManager treeManager;
+    MultiTreeNode* root1 = treeManager.meshToTree(miao.getMesh(),MultiTreeManager::CreationMode::BALANCED);
+    MultiTreeNode* root2 = miao.meshToMultiTree(100);
+
+    std::vector<int> r1,r2;
+    while(root1 != nullptr) {
+        r1.push_back(root1->id);
+        root1 = root1->next;
+    }
+    while(root2 != nullptr) {
+        r2.push_back(root2->id);
+        root2 = root2->next;
+    }
+
+    for (int i = 0; i < r1.size(); ++i) {
+        if(r1.at(i) != r2.at(i)) {
+            std::cout << "Maronna u' carmine" << std::endl;
+            return 0;
+        }
+    }
+    std::cout << "Yey same tree" << std::endl;
 }

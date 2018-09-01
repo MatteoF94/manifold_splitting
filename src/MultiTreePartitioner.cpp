@@ -41,7 +41,7 @@ std::vector<int> MultiTreePartitioner::partitionByNumber(MultiTreeNode *last, Mu
         }
 
         // Check for relatives, but only above a certain value
-        if (curr_node->value >= mThreshold / 3) {
+        if (curr_node->value >= double(mThreshold) * 0.7) {
 
             // If the search has been successful, a partition has been found and we can skip to the next item
             if (checkRelatives(curr_node, group_ids) == MultiTreePartitioner::CUT) {
@@ -85,12 +85,6 @@ std::vector<int> MultiTreePartitioner::partitionByNumber(MultiTreeNode *last, Mu
         curr_node = curr_node->prev;
     }
 
-    curr_node = root;
-    /*while(curr_node->next != nullptr) {
-        if (group_ids->at(curr_node->id) == -1)
-            std::cout << "cazzo?" << std::endl;
-        curr_node = curr_node->next;
-    }*/
     return *group_ids;
 }
 
@@ -148,21 +142,23 @@ bool MultiTreePartitioner::isRelativeLinked(MultiTreeNode *node, std::vector<Mul
     // TODO can be improved, doing only one sweep up to the highest element (the first for sure)
     for(int i = 0; i < chain->size()-1; i++) {
         MultiTreeNode* curr_ancestor = chain->at(i);
-        if(node == curr_ancestor)
+        MultiTreeNode* alt_node = node;
+        if(alt_node == curr_ancestor)
             return true;
 
-        while(node->level < curr_ancestor->level) {
-            if(node->parent == curr_ancestor)
+        while(alt_node->level >= curr_ancestor->level) {
+            if(alt_node->parent == curr_ancestor)
                 return true;
-            node = node->parent;
+            alt_node = alt_node->parent;
         }
     }
 
     return false;
 }
 
-void MultiTreePartitioner::propagateValueCut(MultiTreeNode* sub_root) {
-    int value = sub_root->value;
+void MultiTreePartitioner::propagateValueCut(MultiTreeNode* node) {
+    int value = node->value;
+    MultiTreeNode* sub_root = node;
 
     while(sub_root->propagated) {
         sub_root->parent->value = sub_root->parent->value - value;

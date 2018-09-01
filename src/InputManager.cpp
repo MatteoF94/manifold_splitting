@@ -154,6 +154,9 @@ Graph InputManager::meshToGraphDual() {
 
     for (boost::graph_traits<Mesh>::face_iterator face_it = mesh.faces_begin(); face_it != mesh.faces_end(); ++face_it) {
         int curr_idx = get(face_id_map,(*face_it));
+        boost::graph_traits<Mesh>::face_descriptor face = *face_it;
+        if(*face_it != curr_idx)
+            std::cout << "miao" << std::endl;
         face_map.insert(std::make_pair((*face_it),curr_idx));
     }
 
@@ -208,6 +211,9 @@ Graph InputManager::meshToGraphDual() {
         boost::graph_traits<Graph>::vertex_descriptor u = boost::add_vertex(g);
         if(cont == 2)
             std::cout << miao[u] << std::endl;
+        boost::graph_traits<FiniteDual>::vertex_descriptor verti = *vb;
+        if(*vb != u)
+            std::cout << "miao" << std::endl;
         idDesc.insert({u,*vb});
         descId.insert({*vb,u});
         cont ++;
@@ -445,19 +451,22 @@ void InputManager::breakMesh(int numParts, std::string divisionFileName, std::st
         flags.push_back(flag);
     }
 
-    int currIdx = 0;
 
     for (boost::graph_traits<Mesh>::face_iterator face_iterator = inputMesh.faces_begin(); face_iterator != inputMesh.faces_end(); ++face_iterator) {
-        std::unordered_map<boost::graph_traits<FiniteDual>::vertex_descriptor,boost::graph_traits<Graph>::vertex_descriptor>::const_iterator it = myMap.find(*face_iterator);
-        int currMeshIdx = flags.at(it->second);
-        currIdx++;
+        //std::unordered_map<boost::graph_traits<FiniteDual>::vertex_descriptor,boost::graph_traits<Graph>::vertex_descriptor>::const_iterator it = myMap.find(*face_iterator);
+        int currMeshIdx = flags.at(*face_iterator);
+
+        CGAL::Vertex_around_face_iterator<Mesh> vafb,vafe;
+        for(boost::tie(vafb,vafe)=vertices_around_face(inputMesh.halfedge(*face_iterator),inputMesh);vafb != vafe;++vafb) {
+            int miao = 0;
+        }
 
         boost::graph_traits<Mesh>::halfedge_descriptor hf = halfedge(*face_iterator,inputMesh);
         std::vector<boost::graph_traits<Mesh>::vertex_descriptor> vrtcs;
         for (Mesh::Halfedge_index hi : halfedges_around_face(hf,inputMesh)) {
             //std::cout << "Vertex index: " << target(hi,inputMesh) << std::endl;
             Point p = inputMesh.point(target(hi,inputMesh));
-            if(newVertices[currMeshIdx].find(p)== newVertices[currMeshIdx].end()) {
+            if(newVertices[currMeshIdx].find(p) == newVertices[currMeshIdx].end()) {
                 vrtcs.push_back(splittedMeshes[currMeshIdx].add_vertex(p));
                 newVertices[currMeshIdx].insert(std::make_pair(p,vrtcs.back()));
             }
@@ -493,4 +502,29 @@ void InputManager::breakMesh(int numParts, std::string divisionFileName, std::st
         std::ofstream outfile(ss.str());
         outfile << splittedMeshes[i];
     }
+}
+
+void InputManager::writeMeshToOff(Mesh mesh, std::string output_filename) {
+
+    std::cout << "Saving mesh at: " << output_filename << std::endl;
+    std::stringstream ss;
+    ss << output_filename;
+    std::ofstream outfile(ss.str());
+    outfile << mesh;
+}
+
+void InputManager::writeMeshToOff(std::vector<Mesh> meshes, std::string output_filename) {
+    for(int i = 0; i < meshes.size(); ++i) {
+        std::stringstream ss;
+        ss << output_filename << "_" << i << ".off";
+        writeMeshToOff(meshes[i],ss.str());
+    }
+}
+
+int InputManager::getNumFaces() {
+    return inputMesh.num_faces();
+}
+
+Mesh InputManager::getMesh() {
+    return inputMesh;
 }

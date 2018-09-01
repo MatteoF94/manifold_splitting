@@ -31,7 +31,10 @@ add_executable(manifold_splitting
         src/GraphParser.cpp
         src/InputManager.cpp
         src/KLabelPartitioner.cpp
-        main.cpp include/stopwatch.h include/types.h src/MultiTreePartitioner.cpp include/MultiTreePartitioner.h)
+        main.cpp include/stopwatch.h include/types.h
+        src/MultiTreePartitioner.cpp include/MultiTreePartitioner.h
+        src/MeshManager.cpp include/MeshManager.h
+        src/MultiTreeManager.cpp include/MultiTreeManager.h)
 
 target_link_libraries(manifold_splitting
         ${CGAL_LIBRARY}

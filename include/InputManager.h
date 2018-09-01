@@ -29,12 +29,17 @@ public:
     virtual ~InputManager();
 
     void readMeshFromOff(std::string filename);
+    void writeMeshToOff(std::vector<Mesh> meshes, std::string output_filename);
+    void writeMeshToOff(Mesh mesh, std::string output_filename);
+
     Graph meshToGraphPrimal(Mesh mesh);
     Graph meshToGraphDual();
     void breakMesh(int numParts, std::string divisionFileName, std::string output_filename);
 
     MultiTreeNode* meshToMultiTree(int mode, int depth);
     MultiTreeNode* meshToMultiTree(int depth);
+    int getNumFaces();
+    Mesh getMesh();
 
 private:
     Mesh inputMesh;

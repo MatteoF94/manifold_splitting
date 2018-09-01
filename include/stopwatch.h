@@ -12,7 +12,7 @@
 class Stopwatch {
 public:
     Stopwatch () {
-        mTimeStart = 0.;
+        mTimeStart = 0.0;
     }
 
     void start() {

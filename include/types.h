@@ -48,7 +48,6 @@ struct MultiTreeNode {
 
     MultiTreeNode* mid; // Only for the root node...
 
-    std::vector<MultiTreeNode*> siblings;
     std::vector<MultiTreeNode*> relatives;  // TODO use multi dim vector
 
     MultiTreeNode() : value(1), area(0.0), level(0), valid(true), propagated(false), left(nullptr), right(nullptr), mid(nullptr), parent(nullptr), next(nullptr), prev(nullptr) {
