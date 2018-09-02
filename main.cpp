@@ -56,6 +56,7 @@
 #include <MultiTreeManager.h>
 #include <stopwatch.h>
 #include <CGAL/Polygon_mesh_processing/stitch_borders.h>
+#include <MultiTreePartitioner.h>
 
 int main() {
     /*int size = 3;
@@ -94,7 +95,9 @@ int main() {
     MultiTreeNode* root1 = treeManager.meshToTree(miao.getMesh(),MultiTreeManager::CreationMode::BALANCED);
     MultiTreeNode* root2 = miao.meshToMultiTree(100);
 
-    std::vector<int> r1,r2;
+    MultiTreeNode* root3 = treeManager.meshToTree(miao.getMesh(),MultiTreeManager::CreationMode::THIN);
+
+   /* std::vector<int> r1,r2;
     while(root1 != nullptr) {
         r1.push_back(root1->id);
         root1 = root1->next;
@@ -104,11 +107,44 @@ int main() {
         root2 = root2->next;
     }
 
+    while(root3 != nullptr) {
+        if(root3->parent != nullptr) {
+            if (root3->right != nullptr || root3->mid != nullptr) {
+                std::cout << "MARONNA" << std::endl;
+            }
+        }
+
+        root3 = root3->next;
+    }
+
     for (int i = 0; i < r1.size(); ++i) {
         if(r1.at(i) != r2.at(i)) {
             std::cout << "Maronna u' carmine" << std::endl;
             return 0;
         }
     }
-    std::cout << "Yey same tree" << std::endl;
+    std::cout << "Yey same tree" << std::endl;*/
+
+    MultiTreePartitioner multiTreePartitioner;
+    multiTreePartitioner.configParameters(10,8725,10,8);
+    MultiTreeNode* last = root3;
+    int num_nodes = miao.getNumFaces();
+    int i = 1;
+    while (last->next != nullptr) {
+        last = last->next;
+        i++;
+    }
+
+    std::vector<int> group_ids = multiTreePartitioner.partitionThinByNumber(last, root3, num_nodes);
+
+    std::cout << "Partitioning results: " << std::endl;
+    std::vector<int> num_elem(8,0);
+
+    for (int group_id : group_ids) {
+        if(group_id != -1)
+            num_elem.at(group_id)++;
+    }
+
+    for (int j = 0; j < 8; j++)
+        std::cout << "C" << j << ": " << num_elem.at(j) << std::endl;
 }
