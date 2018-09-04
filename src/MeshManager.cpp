@@ -9,7 +9,7 @@
 
 typedef boost::adjacency_list<boost::setS,boost::vecS,boost::undirectedS> Graph;
 
-void MeshManager::meshToGraph(Mesh mesh) {
+Graph MeshManager::meshToGraph(Mesh mesh) {
 
     Dual dual(mesh);
     FiniteDual finiteDual(dual,noborder<Mesh>(mesh));
@@ -110,7 +110,8 @@ void MeshManager::meshToGraph(Mesh mesh) {
     std::cout << "\t-- graph has " << boost::num_vertices(g) << " vertices" << std::endl;
     std::cout << "\t-- graph has " << boost::num_edges(g) << " edges" << std::endl;
     std::cout << "DONE -- GRAPH CREATED" << std::endl << std::endl;
-    //return g;
+
+    return g;
 }
 
 std::vector<Mesh> MeshManager::breakMesh(Mesh mesh, std::string divisionFileName) {

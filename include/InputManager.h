@@ -19,8 +19,7 @@ typedef boost::graph_traits<Mesh>::vertex_descriptor vertex_descriptor;
     int id;
 };*/
 
-typedef boost::adjacency_list<boost::setS,boost::vecS,boost::undirectedS> Graph;
-typedef boost::graph_traits<Graph>::vertex_iterator VertexItr;
+//typedef boost::graph_traits<Graph>::vertex_iterator VertexItr;
 
 class InputManager {
 public:
@@ -28,7 +27,7 @@ public:
     InputManager();
     virtual ~InputManager();
 
-    void readMeshFromOff(std::string filename);
+    Mesh readMeshFromOff(std::string filename);
     void writeMeshToOff(std::vector<Mesh> meshes, std::string output_filename);
     void writeMeshToOff(Mesh mesh, std::string output_filename);
 

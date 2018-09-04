@@ -184,14 +184,19 @@ MultiTreeNode* MultiTreeManager::meshToTreeThin(Mesh mesh, MultiTreeManager::Cre
         bool ok = false;
 
         for (boost::tie(ai,ai_end)=boost::adjacent_vertices(front_element->id,finiteDual);ai != ai_end; ++ai) {
+            std::cout << *ai << std::endl;
             if(!inserted_map.at(*ai)) {
                 boost::graph_traits<FiniteDual>::adjacency_iterator aai, aai_end;
                 int curr_level = lane_map[front_element->id];
 
                 for (boost::tie(aai, aai_end) = boost::adjacent_vertices(*ai, finiteDual); aai != aai_end; ++aai) {
-                    if (lane_map[*aai] != curr_level)
-                        ok = true;
-
+                    std::cout << *aai << std::endl;
+                    if(*aai != front_element->id) {
+                        if (lane_map[*aai] != curr_level) {
+                            ok = true;
+                            break;
+                        }
+                    }
                 }
             }
 
@@ -215,6 +220,7 @@ MultiTreeNode* MultiTreeManager::meshToTreeThin(Mesh mesh, MultiTreeManager::Cre
 
                 cursor = curr_node;
                 node_map.insert({*ai,curr_node});
+                lane_map[curr_node->id] = lane_map[front_element->id];
 
                 tree_queue.push_back(curr_node);
             }

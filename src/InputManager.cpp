@@ -40,22 +40,23 @@ InputManager::~InputManager() {
 }
 
 // Read a mesh from a .off file and convert it to graph
-void InputManager::readMeshFromOff(const std::string filename) {
+Mesh InputManager::readMeshFromOff(const std::string filename) {
 
     std::cout << "InputManager::readMeshFromOff" << std::endl;
+
+    Mesh mesh;
 
     std::ifstream infile(filename);
     std::cout << "OPENING AT: " << filename.c_str() << std::endl;
     if (!infile) {
         std::cerr << "Unable to open file at " << filename.c_str() << std::endl;
-        return;
+        return mesh;
     }
 
-    Mesh mesh;
     infile >> mesh;
     if (!infile) {
         std::cerr << "This is not a mesh!" << std::endl;
-        return;
+        return mesh;
     }
 
     inputMesh = mesh;
@@ -98,6 +99,8 @@ void InputManager::readMeshFromOff(const std::string filename) {
     BOOST_FOREACH(face_descriptor f, faces(mesh)) {
         std::cout << "\tface " << f << " is in connected component " << fccmap[f] << std::endl;
     }*/
+
+    return mesh;
 }
 
 Graph InputManager::meshToGraphDual() {

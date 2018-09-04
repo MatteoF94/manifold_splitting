@@ -16,6 +16,7 @@ add_executable(KLabelPartitionerTest KLabelPartitionerTest.cpp
 add_executable(BalancedPartitionTest
         BalancedPartitionTest.cpp
         ../src/InputManager.cpp
+        ../src/MeshManager.cpp
         ../src/GraphParser.cpp
         )
 
@@ -36,6 +37,7 @@ target_link_libraries(KLabelPartitionerTest
 
 target_link_libraries(BalancedPartitionTest
         ${CGAL_LIBRARY}
+        gmp
         )
 
 target_link_libraries(MultiTreePartitionerTest

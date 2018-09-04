@@ -58,6 +58,22 @@
 #include <CGAL/Polygon_mesh_processing/stitch_borders.h>
 #include <MultiTreePartitioner.h>
 
+void postorder(MultiTreePartitioner::BNode* p, int indent = 0) {
+    if(p != nullptr) {
+        if(p->right != nullptr) postorder(p->right, indent + 4);
+        if(indent) {
+            std::cout << std::setw(indent) << ' ';
+        }
+        if(p->right) std::cout << " /\n" << std::setw(indent) << ' ';
+        std::cout << p->id << std::endl;
+
+        if(p->left != nullptr) {
+            std::cout << std::setw(indent) << ' ' << " \\\n";
+            postorder(p->left, indent + 4);
+        }
+    }
+}
+
 int main() {
     /*int size = 3;
     Eigen::MatrixXf m = Eigen::MatrixXf::Zero(size,size);
@@ -73,6 +89,39 @@ int main() {
     SpectralClustering mySpecter(m,1);
     mySpecter.setupEigenvectors();
     mySpecter.clusterKmeans(2);*/
+
+    MultiTreePartitioner::BNode* root = new MultiTreePartitioner::BNode;
+    root->id = 0;
+    root->value = 10;
+    MultiTreePartitioner::BNode* node1 = new MultiTreePartitioner::BNode;
+    node1->id = 1;
+    node1->value = 8;
+    MultiTreePartitioner::BNode* node2 = new MultiTreePartitioner::BNode;
+    node2->id = 2;
+    node2->value = 3;
+    MultiTreePartitioner::BNode* node3 = new MultiTreePartitioner::BNode;
+    node3->id = 3;
+    node3->value = 8;
+    MultiTreePartitioner::BNode* node4 = new MultiTreePartitioner::BNode;
+    node4->id = 4;
+    node4->value = 5;
+    MultiTreePartitioner::BNode* node5 = new MultiTreePartitioner::BNode;
+    node5->id = 5;
+    node5->value = 1;
+    MultiTreePartitioner::BNode* node6 = new MultiTreePartitioner::BNode;
+    node6->id = 6;
+    node6->value = 2;
+
+    root->left = node1;
+    root->right = node2;
+    node1->left = node3;
+    node1->right = node4;
+    node2->left = node5;
+    node2->right = node6;
+    auto copy = new MultiTreePartitioner::BNode;
+    MultiTreePartitioner partitioner;
+    std::vector<MultiTreePartitioner::BNode*> trees;
+    trees = partitioner.createTreePowerSet(root);
 
     InputManager miao;
     miao.readMeshFromOff("../data/WatermarkingBenchmark/bunny.off");
