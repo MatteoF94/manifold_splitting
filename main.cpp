@@ -89,6 +89,9 @@ int main() {
     SpectralClustering mySpecter(m,1);
     mySpecter.setupEigenvectors();
     mySpecter.clusterKmeans(2);*/
+    InputManager miao;
+    Mesh mesh = miao.readMeshFromOff("../data/Watermarking/bunny/bunny.off");
+    miao.meshToMetisFormat(mesh,"../data/Watermarking/bunny/bunny.mesh");
 
     MultiTreePartitioner::BNode* root = new MultiTreePartitioner::BNode;
     root->id = 0;
@@ -123,7 +126,6 @@ int main() {
     std::vector<MultiTreePartitioner::BNode*> trees;
     trees = partitioner.createTreePowerSet(root);
 
-    InputManager miao;
     miao.readMeshFromOff("../data/WatermarkingBenchmark/bunny.off");
     /*MeshManager manager;
     Stopwatch stopwatch;

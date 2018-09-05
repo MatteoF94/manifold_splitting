@@ -37,6 +37,9 @@ public:
 
     MultiTreeNode* meshToMultiTree(int mode, int depth);
     MultiTreeNode* meshToMultiTree(int depth);
+
+    void meshToMetisFormat(Mesh mesh, std::string output_filename);
+
     int getNumFaces();
     Mesh getMesh();
 

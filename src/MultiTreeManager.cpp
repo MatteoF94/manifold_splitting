@@ -83,11 +83,15 @@ MultiTreeNode* MultiTreeManager::meshToTreeNormal(Mesh mesh, MultiTreeManager::C
                     tree_queue.push_back(curr_node);
             }
             else if (front_element->parent != nullptr) {
-                MultiTreeNode* old_node = node_map.at(*ai);
+
+                if(front_element->parent->id != *ai) {
+                    MultiTreeNode *old_node = node_map.at(*ai);
 
 
-                if(front_element->level - old_node->level < max_depth && front_element->level - old_node->level >= 0 && front_element->parent != old_node)
-                    old_node->relatives.push_back(front_element);
+                    if (front_element->level - old_node->level < max_depth &&
+                        front_element->level - old_node->level >= 0)
+                        old_node->relatives.push_back(front_element);
+                }
             }
         }
 

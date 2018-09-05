@@ -20,12 +20,24 @@ add_executable(BalancedPartitionTest
         ../src/GraphParser.cpp
         )
 
+add_executable(MetisPartitioningTest
+        ../src/InputManager.cpp
+        ../src/MeshManager.cpp
+        MetisPartitioningTest.cpp
+        )
+
+add_executable(ParMetisPartitioningTest
+        ../src/InputManager.cpp
+        ../src/MeshManager.cpp
+        ParMetisPartitioningTest.cpp
+        )
+
 add_executable(MultiTreePartitionerTest
         MultiTreePartitionerTest.cpp
         ../src/MultiTreePartitioner.cpp
-        ../include/MultiTreePartitioner.h
         ../src/InputManager.cpp
-        ../include/InputManager.h
+        ../src/MultiTreeManager.cpp
+        ../src/MeshManager.cpp
         )
 
 target_link_libraries(KLabelPartitionerTest
@@ -36,6 +48,16 @@ target_link_libraries(KLabelPartitionerTest
         )
 
 target_link_libraries(BalancedPartitionTest
+        ${CGAL_LIBRARY}
+        gmp
+        )
+
+target_link_libraries(MetisPartitioningTest
+        ${CGAL_LIBRARY}
+        gmp
+        )
+
+target_link_libraries(ParMetisPartitioningTest
         ${CGAL_LIBRARY}
         gmp
         )

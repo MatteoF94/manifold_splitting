@@ -432,6 +432,25 @@ MultiTreeNode* InputManager::meshToMultiTree(int depth) {
     return root;
 }
 
+void InputManager::meshToMetisFormat(Mesh mesh, std::string output_filename){
+    std::ofstream outfile(output_filename);
+    std::cout << "CONVERTING AT: " << output_filename.c_str() << std::endl;
+    if (!outfile) {
+        std::cerr << "Unable to open file at " << output_filename.c_str() << std::endl;
+        return;
+    }
+
+    outfile << mesh.num_faces() << " " << "1" << std::endl;
+
+    for (boost::graph_traits<Mesh>::face_iterator face_iterator = inputMesh.faces_begin(); face_iterator != inputMesh.faces_end(); ++face_iterator) {
+
+        CGAL::Vertex_around_face_iterator<Mesh> vafb,vafe;
+        for(boost::tie(vafb,vafe) = CGAL::vertices_around_face(mesh.halfedge(*face_iterator),mesh);vafb != vafe;++vafb) {
+            outfile << int(*vafb) + 1 << " ";
+        }
+        outfile << std::endl;
+    }
+}
 
 void InputManager::breakMesh(int numParts, std::string divisionFileName, std::string output_filename) {
     Mesh splittedMeshes[numParts];

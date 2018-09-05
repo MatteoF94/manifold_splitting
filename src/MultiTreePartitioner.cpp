@@ -43,12 +43,13 @@ std::vector<int> MultiTreePartitioner::partitionByNumber(MultiTreeNode *last, Mu
         }
 
         // Check for relatives, but only above a certain value
-        if (curr_node->value >= double(mThreshold) * 0.7) {
-
-            // If the search has been successful, a partition has been found and we can skip to the next item
-            if (checkRelatives(curr_node, group_ids) == MultiTreePartitioner::CUT) {
-                curr_node = curr_node->prev;
-                continue;
+        if (curr_node->value >= double(mThreshold) * 0.33) {
+            if(!curr_node->relatives.empty()) {
+                // If the search has been successful, a partition has been found and we can skip to the next item
+                if (checkRelatives(curr_node, group_ids) == MultiTreePartitioner::CUT) {
+                    curr_node = curr_node->prev;
+                    continue;
+                }
             }
         }
 
@@ -250,12 +251,12 @@ MultiTreePartitioner::LinkageState MultiTreePartitioner::checkRelatives(MultiTre
 MultiTreePartitioner::LinkageState MultiTreePartitioner::checkDescendantsFull(MultiTreeNode *node, std::vector<int> *groups){
     BNode* root = new BNode;
     root->id = node->id;
-    std::vector<MultiTreeNode*>* ids;
+    std::vector<MultiTreeNode*>* ids = new std::vector<MultiTreeNode*>;
     ids->push_back(node);
     createMiniTree(root,node,ids,1);
 
-    std::vector<BNode*>* trees;
-    BNode* root_copy;
+    std::vector<BNode*>* trees = new std::vector<BNode*>;
+    BNode* root_copy = new BNode;
     root_copy->id = node->id;
     trees->push_back(root_copy);
 

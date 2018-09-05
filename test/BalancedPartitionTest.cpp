@@ -39,7 +39,7 @@ std::string selectMesh(int mesh_idx) {
 
 int main (int argc, char* argv[]) {
 
-    std::string selected_mesh = selectMesh(9);
+    std::string selected_mesh = selectMesh(0);
     std::string input_filename = "../../data/Watermarking/" + selected_mesh + "/" + selected_mesh + ".off";
     //std::string input_filename = "../../data/EPFL/castle_dense_large/castle_dense_large.off";
     //std::string input_filename = "../../data/EPFL/fountain-P11/fountain.off";
@@ -101,7 +101,7 @@ int main (int argc, char* argv[]) {
 
     std::cout << "Writing the sub-meshes to .off files..." << std::endl;
     stopwatch.start();
-    input_manager.writeMeshToOff(meshes,std::string("../../data/Watermarking/" + selected_mesh + "/KaHIP/" + selected_mesh + ".txt"));
+    input_manager.writeMeshToOff(meshes,std::string("../../data/Watermarking/" + selected_mesh + "/KaHIP/" + selected_mesh));
     elapsed_time = stopwatch.stop();
     total_time = total_time + elapsed_time;
     std::cout << "DONE in " << elapsed_time << " seconds" << std::endl << std::endl;
