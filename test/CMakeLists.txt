@@ -2,8 +2,10 @@ cmake_minimum_required(VERSION 3.10)
 project(test)
 
 set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -frounding-math")
 
 include_directories(
+
     "../src" ,
         "../include"
 )
@@ -18,7 +20,7 @@ add_executable(BalancedPartitionTest
         ../src/InputManager.cpp
         ../src/MeshManager.cpp
         ../src/GraphParser.cpp
-        )
+        ZoltanPartitioningTest.cpp)
 
 add_executable(MetisPartitioningTest
         ../src/InputManager.cpp
@@ -30,6 +32,12 @@ add_executable(ParMetisPartitioningTest
         ../src/InputManager.cpp
         ../src/MeshManager.cpp
         ParMetisPartitioningTest.cpp
+        )
+
+add_executable(ZoltanPartitioningTest
+        ../src/InputManager.cpp
+        ../src/MeshManager.cpp
+        ZoltanPartitioningTest.cpp
         )
 
 add_executable(MultiTreePartitionerTest
@@ -58,6 +66,11 @@ target_link_libraries(MetisPartitioningTest
         )
 
 target_link_libraries(ParMetisPartitioningTest
+        ${CGAL_LIBRARY}
+        gmp
+        )
+
+target_link_libraries(ZoltanPartitioningTest
         ${CGAL_LIBRARY}
         gmp
         )

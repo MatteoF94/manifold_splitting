@@ -15,6 +15,7 @@ public:
     std::vector<Mesh> breakMesh(Mesh mesh, std::string divisionFileName);
     void breakMeshAndStitch(Mesh mesh, std::string divisionFileName);
     std::map<boost::graph_traits<Mesh>::face_descriptor,double> computeFacesArea(Mesh mesh);
+    std::map<boost::graph_traits<Mesh>::face_descriptor,Point> computeFacesCentroid(Mesh mesh);
 };
 
 

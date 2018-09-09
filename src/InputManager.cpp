@@ -543,6 +543,20 @@ void InputManager::writeMeshToOff(std::vector<Mesh> meshes, std::string output_f
     }
 }
 
+void InputManager::writeMeshForZoltan(std::map<boost::graph_traits<Mesh>::face_descriptor,Point> centroid_map, std::string output_filename) {
+    std::ofstream outfile(output_filename);
+
+    unsigned long num_faces = centroid_map.size();
+    outfile << num_faces << std::endl;
+
+    for (auto const& pair : centroid_map) {
+        Point curr_point = pair.second;
+        outfile << int(pair.first)+1 << " " << curr_point.x() << " " << curr_point.y() << " " << curr_point.z() << std::endl;
+    }
+
+    outfile.close();
+}
+
 int InputManager::getNumFaces() {
     return inputMesh.num_faces();
 }

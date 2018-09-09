@@ -30,6 +30,7 @@ public:
     Mesh readMeshFromOff(std::string filename);
     void writeMeshToOff(std::vector<Mesh> meshes, std::string output_filename);
     void writeMeshToOff(Mesh mesh, std::string output_filename);
+    void writeMeshForZoltan(std::map<boost::graph_traits<Mesh>::face_descriptor,Point> centroid_map, std::string output_filename);
 
     Graph meshToGraphPrimal(Mesh mesh);
     Graph meshToGraphDual();

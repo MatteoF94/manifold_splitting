@@ -4,6 +4,7 @@
 
 #include <CGAL/Polygon_mesh_processing/connected_components.h>
 #include <CGAL/Polygon_mesh_processing/stitch_borders.h>
+#include <CGAL/centroid.h>
 #include <fstream>
 #include "MeshManager.h"
 
@@ -250,3 +251,24 @@ std::map<boost::graph_traits<Mesh>::face_descriptor,double> MeshManager::compute
 
     return faces_area_map;
 }
+
+std::map<boost::graph_traits<Mesh>::face_descriptor,Point> MeshManager::computeFacesCentroid(Mesh mesh) {
+
+    std::map<boost::graph_traits<Mesh>::face_descriptor,Point > faces_centroid_map;
+
+    for (boost::graph_traits<Mesh>::face_iterator face_iterator = mesh.faces_begin(); face_iterator != mesh.faces_end(); ++face_iterator) {
+        boost::graph_traits<Mesh>::face_descriptor curr_face_id = *face_iterator;
+        std::vector<Point> vertices;
+
+        CGAL::Vertex_around_face_iterator<Mesh> vafb,vafe;
+        for(boost::tie(vafb,vafe) = CGAL::vertices_around_face(mesh.halfedge(curr_face_id),mesh);vafb != vafe;++vafb) {
+
+            Point p = mesh.point(*vafb);
+            vertices.push_back(p);
+        }
+
+        faces_centroid_map.insert({curr_face_id, CGAL::centroid(vertices.begin(),vertices.end(),CGAL::Dimension_tag<0>())});
+    }
+
+    return faces_centroid_map;
+};
