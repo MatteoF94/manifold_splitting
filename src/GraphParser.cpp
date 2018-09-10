@@ -82,3 +82,66 @@ void GraphParser::convertDotToMetis(std::string filename) {
         outfile << std::endl;
     }
 }
+
+void GraphParser::convertDotToZoltanGraph(std::string filename, std::string out_filename) {
+    std::cout << "GraphParser::convertDotToZoltanGraph" << std::endl;
+
+    std::ifstream infile(filename);
+    std::cout << "OPENING AT: " << filename.c_str() << std::endl;
+    if (!infile) {
+        std::cerr << "Unable to open file at" << filename.c_str() << std::endl;
+        return;
+    }
+
+    std::string headTag;
+    getline(infile, headTag);
+    if (headTag.find("graph G") == std::string::npos) {
+        std::cerr << "Incorrect file format" << std::endl;
+        return;
+    }
+
+    std::string line;
+    int num_vertices = 0;
+    int num_neighbours = 0;
+    std::map<int, std::unordered_set<int>> graphMap;
+
+    while (std::getline(infile, line)) {
+        if (line.find("--") != std::string::npos)
+            break;
+        std::replace(line.begin(), line.end(), '[', ' ');
+        std::replace(line.begin(), line.end(), ']', ' ');
+        std::replace(line.begin(), line.end(), ';', ' ');
+
+        std::istringstream iss(line);
+        int a;
+        if (!(iss >> a)) break; // error
+        num_vertices++;
+        std::unordered_set<int> tmp;
+        graphMap.insert({a, tmp});
+    }
+
+    std::cout << "There are " << num_vertices << " vertices" << std::endl;
+    do {
+        std::replace(line.begin(), line.end(), '-', ' ');
+        std::istringstream iss(line);
+        int a, b;
+        if (!(iss >> a >> b)) break;
+        graphMap[a].insert(b);
+        graphMap[b].insert(a);
+        num_neighbours = num_neighbours + 2;
+    } while (std::getline(infile, line));
+
+    std::cout << "Saving at " << out_filename << std::endl;
+
+    std::ofstream outfile(out_filename);
+    outfile << num_vertices << std::endl;
+    outfile << num_neighbours << std::endl;
+    for(std::pair<int,std::unordered_set<int>> element : graphMap) {
+        outfile << element.first+1 << " " << element.second.size() << " ";
+
+        for (int elementIn : element.second) {
+            outfile << elementIn+1 << " ";
+        }
+        outfile << std::endl;
+    }
+}

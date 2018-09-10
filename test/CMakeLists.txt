@@ -20,7 +20,7 @@ add_executable(BalancedPartitionTest
         ../src/InputManager.cpp
         ../src/MeshManager.cpp
         ../src/GraphParser.cpp
-        ZoltanPartitioningTest.cpp)
+       )
 
 add_executable(MetisPartitioningTest
         ../src/InputManager.cpp
@@ -34,10 +34,17 @@ add_executable(ParMetisPartitioningTest
         ParMetisPartitioningTest.cpp
         )
 
-add_executable(ZoltanPartitioningTest
+add_executable(ZoltanGeomPartitioningTest
         ../src/InputManager.cpp
         ../src/MeshManager.cpp
-        ZoltanPartitioningTest.cpp
+        ZoltanGeomPartitioningTest.cpp
+        )
+
+add_executable(ZoltanGraphPartitioningTest
+        ../src/InputManager.cpp
+        ../src/MeshManager.cpp
+        ../src/GraphParser.cpp
+        ZoltanGraphPartitioningTest.cpp
         )
 
 add_executable(MultiTreePartitionerTest
@@ -70,7 +77,12 @@ target_link_libraries(ParMetisPartitioningTest
         gmp
         )
 
-target_link_libraries(ZoltanPartitioningTest
+target_link_libraries(ZoltanGeomPartitioningTest
+        ${CGAL_LIBRARY}
+        gmp
+        )
+
+target_link_libraries(ZoltanGraphPartitioningTest
         ${CGAL_LIBRARY}
         gmp
         )

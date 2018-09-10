@@ -15,6 +15,7 @@ public:
     virtual ~GraphParser();
 
     void convertDotToMetis(std::string filename);
+    void convertDotToZoltanGraph(std::string filename, std::string out_filename);
 
 private:
 
