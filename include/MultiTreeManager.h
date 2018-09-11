@@ -11,7 +11,7 @@ class MultiTreeManager {
 public:
     struct CreationMode {
         enum Type {
-            LTR, RTL, BALANCED, HYPER_FLIP, THIN
+            LTR, RTL, BALANCED, HYPER_FLIP, THIN, DF
         };
 
         Type t_;
@@ -31,6 +31,8 @@ public:
 
 private:
     MultiTreeNode *meshToTreeNormal(Mesh mesh, CreationMode mode, int max_depth);
+
+    MultiTreeNode *meshToTreeDF(Mesh mesh, int max_depth);
 
     MultiTreeNode *meshToTreeThin(Mesh mesh, CreationMode mode);
 

@@ -3,12 +3,15 @@
 //
 
 #include <unordered_map>
-#include <queue>
+#include <stack>
+#include <vector>
 #include "MultiTreeManager.h"
 
 MultiTreeNode* MultiTreeManager::meshToTree(Mesh mesh, MultiTreeManager::CreationMode mode, int max_depth) {
     if(mode == CreationMode::THIN)
         return meshToTreeThin(mesh,mode);
+    if(mode == CreationMode::DF)
+        return meshToTreeDF(mesh,max_depth);
     else
         return meshToTreeNormal(mesh,mode,max_depth);
 }
@@ -111,6 +114,87 @@ MultiTreeNode* MultiTreeManager::meshToTreeNormal(Mesh mesh, MultiTreeManager::C
                 balanced_ltr = !balanced_ltr;
             }
         }
+    }
+
+    return root;
+}
+
+MultiTreeNode* MultiTreeManager::meshToTreeDF(Mesh mesh, int max_depth){
+
+    Dual dual(mesh);
+    FiniteDual finiteDual(dual,noborder<Mesh>(mesh));
+    boost::graph_traits<FiniteDual>::vertex_iterator vb,ve;
+    boost::tie(vb,ve) = boost::vertices(finiteDual);
+
+    std::map<int,bool> inserted_map;
+    for(int i = 0; i < boost::num_vertices(finiteDual); i++) {
+        inserted_map.insert({i,false});
+    }
+
+    std::unordered_map<boost::graph_traits<FiniteDual>::vertex_descriptor, MultiTreeNode*> node_map;
+    std::stack<MultiTreeNode*> tree_stack;
+    auto * root = new MultiTreeNode;
+    root->level = 0;
+    root->value = 1;
+    root->id = *vb;
+
+    node_map.insert({*vb,root});
+    tree_stack.push(root);
+
+    inserted_map.at(*vb) = true;
+    MultiTreeNode* cursor = tree_stack.top();
+
+    bool flip = false;
+
+    while (!tree_stack.empty()) {
+        boost::graph_traits<FiniteDual>::adjacency_iterator ai,ai_end;
+        MultiTreeNode* front_element = tree_stack.top();
+
+        std::vector<MultiTreeNode*> tmp_queue;
+
+        int state = 0;
+
+        for (boost::tie(ai,ai_end)=boost::adjacent_vertices(front_element->id,finiteDual);ai != ai_end; ++ai) {
+            if(!inserted_map.at(*ai)) {
+                inserted_map.at(*ai) = true;
+
+                auto *curr_node = new MultiTreeNode;
+                curr_node->id = *ai;
+                curr_node->parent = front_element;
+                curr_node->level = curr_node->parent->level + 1;
+
+                curr_node->prev = cursor;
+                curr_node->prev->next = curr_node;
+
+                state++;
+
+                switch (state) {
+                    case 1:
+                        curr_node->parent->left = curr_node;
+                        break;
+                    case 2:
+                        curr_node->parent->right = curr_node;
+                        break;
+                    default:
+                        curr_node->parent->mid = curr_node; // Reached only for the root...
+                        break;
+                }
+
+                cursor = curr_node;
+                node_map.insert({*ai,curr_node});
+                tmp_queue.push_back(curr_node);
+            }
+        }
+
+        tree_stack.pop();
+        if(!flip) {
+            std::reverse(tmp_queue.begin(), tmp_queue.end());
+            flip = true;
+        } else
+            flip = false;
+
+        for (auto &node : tmp_queue)
+            tree_stack.push(node);
     }
 
     return root;
