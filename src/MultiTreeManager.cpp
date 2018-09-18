@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <stack>
 #include <vector>
+#include <queue>
 #include "MultiTreeManager.h"
 
 MultiTreeNode* MultiTreeManager::meshToTree(Mesh mesh, MultiTreeManager::CreationMode mode, int max_depth) {
@@ -61,9 +62,6 @@ MultiTreeNode* MultiTreeManager::meshToTreeNormal(Mesh mesh, MultiTreeManager::C
                 curr_node->parent = front_element;
                 curr_node->level = curr_node->parent->level + 1;
 
-                curr_node->prev = cursor;
-                curr_node->prev->next = curr_node;
-
                 state++;
 
                 switch (state) {
@@ -78,12 +76,17 @@ MultiTreeNode* MultiTreeManager::meshToTreeNormal(Mesh mesh, MultiTreeManager::C
                         break;
                 }
 
-                cursor = curr_node;
+
                 node_map.insert({*ai,curr_node});
                 if(mode == CreationMode::RTL || (mode == CreationMode::BALANCED && balanced_ltr) || (mode == CreationMode::HYPER_FLIP && to_flip))
                     tmp_queue.push_back(curr_node);
-                else
+                else {
+                    curr_node->prev = cursor;
+                    if(cursor != nullptr)
+                        curr_node->prev->next = curr_node;
+                    cursor = curr_node;
                     tree_queue.push_back(curr_node);
+                }
             }
             else if (front_element->parent != nullptr) {
 
@@ -100,8 +103,13 @@ MultiTreeNode* MultiTreeManager::meshToTreeNormal(Mesh mesh, MultiTreeManager::C
 
         if(mode == CreationMode::RTL || (mode == CreationMode::BALANCED && balanced_ltr) || (mode == CreationMode::HYPER_FLIP && to_flip)) {
             std::reverse(tmp_queue.begin(), tmp_queue.end());
-            for(auto &node : tmp_queue)
+            for(auto &node : tmp_queue) {
+                node->prev = cursor;
+                if(cursor != nullptr)
+                    node->prev->next = node;
+                cursor = node;
                 tree_queue.push_back(node);
+            }
         }
 
         to_flip = !to_flip;
@@ -142,7 +150,7 @@ MultiTreeNode* MultiTreeManager::meshToTreeDF(Mesh mesh, int max_depth){
     tree_stack.push(root);
 
     inserted_map.at(*vb) = true;
-    MultiTreeNode* cursor = tree_stack.top();
+    MultiTreeNode* cursor = root;
 
     bool flip = false;
 
@@ -163,8 +171,8 @@ MultiTreeNode* MultiTreeManager::meshToTreeDF(Mesh mesh, int max_depth){
                 curr_node->parent = front_element;
                 curr_node->level = curr_node->parent->level + 1;
 
-                curr_node->prev = cursor;
-                curr_node->prev->next = curr_node;
+                /*curr_node->prev = cursor;
+                curr_node->prev->next = curr_node;*/
 
                 state++;
 
@@ -180,7 +188,7 @@ MultiTreeNode* MultiTreeManager::meshToTreeDF(Mesh mesh, int max_depth){
                         break;
                 }
 
-                cursor = curr_node;
+                //cursor = curr_node;
                 node_map.insert({*ai,curr_node});
                 tmp_queue.push_back(curr_node);
             }
@@ -193,8 +201,13 @@ MultiTreeNode* MultiTreeManager::meshToTreeDF(Mesh mesh, int max_depth){
         } else
             flip = false;
 
-        for (auto &node : tmp_queue)
+        for (auto &node : tmp_queue) {
+            node->prev = cursor;
+            if(cursor != nullptr)
+                node->prev->next = node;
+            cursor = node;
             tree_stack.push(node);
+        }
     }
 
     return root;
@@ -347,5 +360,82 @@ void MultiTreeManager::addAreasToTree(MultiTreeNode* root, std::map<boost::graph
         double curr_area = areas[curr_node->id];
         curr_node->area = curr_area;
         curr_node = curr_node->next;
+    }
+}
+
+void MultiTreeManager::regenerateTree(MultiTreeNode *root, std::vector<int> group_ids){
+    std::queue<MultiTreeNode*> tree_queue;
+    int curr_group = group_ids.at(root->id);
+    tree_queue.push(root);
+    MultiTreeNode* cursor = nullptr;
+    root->prev = nullptr;
+    root->parent = nullptr;
+
+    while(!tree_queue.empty()) {
+        MultiTreeNode* curr_node = tree_queue.front();
+        curr_node->value = 1;
+        curr_node->valid = true;
+        curr_node->propagated = false;
+        curr_node->prev = cursor;
+        curr_node->next = nullptr;
+
+        if(cursor != nullptr)
+            curr_node->prev->next = curr_node;
+
+        if(curr_node->left != nullptr) {
+            if(group_ids.at(curr_node->left->id) == curr_group) {
+                tree_queue.push(curr_node->left);
+            } else {
+                curr_node->left = nullptr;
+            }
+        }
+
+        if(curr_node->right != nullptr) {
+            if(group_ids.at(curr_node->right->id) == curr_group) {
+                tree_queue.push(curr_node->right);
+            } else {
+                curr_node->right = nullptr;
+            }
+        }
+
+        if(curr_node->mid != nullptr) {
+            if(group_ids.at(curr_node->mid->id) == curr_group) {
+                tree_queue.push(curr_node->mid);
+            } else {
+                curr_node->mid = nullptr;
+            }
+        }
+
+        std::vector<MultiTreeNode*> tmp;
+        for(auto &descendant : curr_node->relatives) {
+            if(group_ids.at(descendant->id) != curr_group)
+                tmp.push_back(descendant);
+        }
+        curr_node->relatives.clear();
+        curr_node->relatives.insert(curr_node->relatives.end(),tmp.begin(),tmp.end());
+
+        cursor = curr_node;
+        tree_queue.pop();
+    }
+}
+
+void MultiTreeManager::linkTrees(std::vector<MultiTreeNode*>* tree_roots) {
+
+    for(unsigned int i = 0; i < tree_roots->size()-1; ++i) {
+        MultiTreeNode* curr_root = tree_roots->at(i);
+
+        if(curr_root->left == nullptr) {
+            curr_root->left = tree_roots->at(i+1);
+            tree_roots->at(i+1)->parent = curr_root;
+            continue;
+        }
+
+        if(curr_root->left == nullptr) {
+            curr_root->left = tree_roots->at(i+1);
+            tree_roots->at(i+1)->parent = curr_root;
+            continue;
+        }
+
+        std::cerr << "Something wrong here, nodes have only two children at most!" << std::endl;
     }
 }

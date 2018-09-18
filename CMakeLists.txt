@@ -10,6 +10,8 @@ find_package(CGAL REQUIRED)
 find_package(GMP REQUIRED)
 find_package(OpenCV REQUIRED)
 
+find_package(MPI REQUIRED)
+
 include_directories(include)
 include_directories(src/SpectralClustering)
 include_directories(
@@ -17,6 +19,7 @@ include_directories(
         ${EIGEN3_INCLUDE_DIRS}
         ${OpenCV_INCLUDE_DIRS}
         ${Boost_INCLUDE_DIRS}
+        ${MPI_INCLUDE_PATH}
 )
 
 

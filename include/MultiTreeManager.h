@@ -29,6 +29,10 @@ public:
 
     void addAreasToTree(MultiTreeNode *root, std::map<boost::graph_traits<Mesh>::face_descriptor, double> areas);
 
+    void regenerateTree(MultiTreeNode *root, std::vector<int> group_ids);
+
+    void linkTrees(std::vector<MultiTreeNode*>* tree_roots);
+
 private:
     MultiTreeNode *meshToTreeNormal(Mesh mesh, CreationMode mode, int max_depth);
 

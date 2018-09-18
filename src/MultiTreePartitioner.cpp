@@ -24,6 +24,8 @@ void MultiTreePartitioner::configParameters(int search_depth, int threshold, int
 
 std::vector<int> MultiTreePartitioner::partitionByNumber(MultiTreeNode *last, MultiTreeNode* root, int num_elements) {
     mNumGroups = 0;
+    mRoots = new std::vector<std::vector<MultiTreeNode*>*>();
+    mFaceGroupId = new std::map<boost::graph_traits<Mesh>::face_descriptor,int>();
     MultiTreeNode* curr_node = last;
     std::vector<int>* group_ids = new std::vector<int>(num_elements,-1);
 
@@ -33,6 +35,9 @@ std::vector<int> MultiTreePartitioner::partitionByNumber(MultiTreeNode *last, Mu
         // If there are already been k-1 cuts, the last one is mandatorily in the root, skipping the remaining nodes
         if(mNumGroups == mNumPartitions - 1) {
             cutTree(root,group_ids);
+            std::vector<MultiTreeNode*>* curr_cut = new std::vector<MultiTreeNode*>();
+            curr_cut->push_back(root);
+            mRoots->push_back(curr_cut);
             break;
         }
 
@@ -61,6 +66,9 @@ std::vector<int> MultiTreePartitioner::partitionByNumber(MultiTreeNode *last, Mu
                 if (curr_node->prev->value + curr_node->value > mThreshold * (1.0 + double(mEpsilon) / 100.0)) {
                     MultiTreeNode *max = curr_node->value > curr_node->prev->value ? curr_node : curr_node->prev;
                     cutTree(max, group_ids);
+                    std::vector<MultiTreeNode*>* curr_cut = new std::vector<MultiTreeNode*>();
+                    curr_cut->push_back(max);
+                    mRoots->push_back(curr_cut);
                     mNumGroups++;
 
                     if(max != curr_node)
@@ -73,10 +81,39 @@ std::vector<int> MultiTreePartitioner::partitionByNumber(MultiTreeNode *last, Mu
             }
         }
 
+        if(curr_node->parent->parent == nullptr) {
+            if (curr_node->parent->mid == curr_node) {
+                if (curr_node->prev != nullptr && curr_node->prev->prev != nullptr) {
+
+                    if (curr_node->prev->prev->value + curr_node->prev->value + curr_node->value >
+                        mThreshold * (1.0 + double(mEpsilon) / 100.0)) {
+                        MultiTreeNode *max = curr_node->value > curr_node->prev->value ? curr_node : curr_node->prev;
+                        max = max->value > curr_node->prev->prev->value ? max : curr_node->prev->prev;
+
+                        cutTree(max, group_ids);
+                        std::vector<MultiTreeNode*> *curr_cut = new std::vector<MultiTreeNode*>();
+                        curr_cut->push_back(max);
+                        mRoots->push_back(curr_cut);
+                        mNumGroups++;
+
+                        if (max != curr_node)
+                            curr_node->parent->value = curr_node->parent->value + curr_node->value;
+
+                        curr_node = curr_node->prev;
+
+                        continue;
+                    }
+                }
+            }
+        }
+
 
         // If the current node is the root or exceeds the threshold, then cut
         if (curr_node->value >= mThreshold) {
             cutTree(curr_node, group_ids);
+            std::vector<MultiTreeNode*>* curr_cut = new std::vector<MultiTreeNode*>();
+            curr_cut->push_back(curr_node);
+            mRoots->push_back(curr_cut);
             if (mNumGroups < mNumPartitions - 1) {
                 mNumGroups++;
             }
@@ -223,10 +260,13 @@ MultiTreePartitioner::LinkageState MultiTreePartitioner::checkRelatives(MultiTre
     stack->push_back(node);
     sum = sum + node->value;
     if (sum >= mThreshold && sum <= mThreshold*(1.0 + double(mEpsilon)/100.0)) {
+        std::vector<MultiTreeNode*>* curr_cut = new std::vector<MultiTreeNode*>(stack->size());
         for (auto &i : *stack) {
             propagateValueCut(i);
             cutTree(i, groups);
+            curr_cut->push_back(i);
         }
+        mRoots->push_back(curr_cut);
         if(mNumGroups < mNumPartitions - 1) {
             mNumGroups++;
         }
@@ -483,6 +523,7 @@ void MultiTreePartitioner::cutTree (MultiTreeNode* sub_root, std::vector<int>* g
     if(sub_root->valid) {
         sub_root->valid = false;
         group_list->at(sub_root->id) = mNumGroups;
+        mFaceGroupId->insert({sub_root->id,mNumGroups});
         cutTree(sub_root->left,group_list);
         cutTree(sub_root->right,group_list);
         if(sub_root->parent == nullptr)
@@ -524,3 +565,19 @@ std::unordered_map<boost::graph_traits<Mesh>::face_descriptor, int> MultiTreePar
 
     return lane_map;
 };
+
+std::vector<std::vector<MultiTreeNode*>*>* MultiTreePartitioner::getRoots() {
+    /*for(int i = 0; i < mRoots->size(); ++i) {
+        std::vector<MultiTreeNode*>* curr_vector = mRoots->at(i);
+        for(int j = 0; j < curr_vector->size(); ++j) {
+            MultiTreeNode* curr_node = curr_vector->at(j);
+            std::cout << " " << std::endl;
+        }
+    }*/
+
+    return mRoots;
+}
+
+std::map<boost::graph_traits<Mesh>::face_descriptor,int>* MultiTreePartitioner::getFaceGroupMap() {
+    return mFaceGroupId;
+}

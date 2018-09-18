@@ -29,6 +29,9 @@ public:
     std::vector<MultiTreePartitioner::BNode*> createTreePowerSet(BNode* root);
     void createLeftPowerTree(BNode* root, BNode* root_copy, int depth);
 
+    std::vector<std::vector<MultiTreeNode*>*>* getRoots();
+    std::map<boost::graph_traits<Mesh>::face_descriptor,int>* getFaceGroupMap();
+
 private:
     enum LinkageState {CUT,UNSUCCESFUL};
 
@@ -51,7 +54,8 @@ private:
     int mThreshold;
     int mEpsilon;
     int mNumPartitions;
-
+    std::vector<std::vector<MultiTreeNode*>*>* mRoots;
+    std::map<boost::graph_traits<Mesh>::face_descriptor,int>* mFaceGroupId;
 
 };
 

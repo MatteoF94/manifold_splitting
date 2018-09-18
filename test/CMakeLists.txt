@@ -55,6 +55,17 @@ add_executable(MultiTreePartitionerTest
         ../src/MeshManager.cpp
         )
 
+add_executable(RecursiveMTPTest
+        RecursiveMTPTest.cpp
+        ../src/MultiTreeManager.cpp
+        ../src/MeshManager.cpp
+        ../src/InputManager.cpp
+        ../src/MultiTreePartitioner.cpp)
+
+add_executable(MPITest
+        MPITest.cpp
+        )
+
 target_link_libraries(KLabelPartitionerTest
         ${OpenCV_LIBS}
         ${CGAL_LIBRARY}
@@ -90,4 +101,13 @@ target_link_libraries(ZoltanGraphPartitioningTest
 target_link_libraries(MultiTreePartitionerTest
         ${CGAL_LIBRARY}
         gmp
+        )
+
+target_link_libraries(RecursiveMTPTest
+        ${CGAL_LIBRARY}
+        gmp
+        )
+
+target_link_libraries(MPITest
+        ${MPI_LIBRARIES}
         )
