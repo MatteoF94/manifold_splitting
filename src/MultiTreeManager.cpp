@@ -12,7 +12,7 @@ MultiTreeNode* MultiTreeManager::meshToTree(Mesh mesh, MultiTreeManager::Creatio
     if(mode == CreationMode::THIN)
         return meshToTreeThin(mesh,mode);
     if(mode == CreationMode::DF)
-        return meshToTreeDF(mesh,max_depth);
+        return meshToTreeDF(mesh,max_depth,max_depth);
     else
         return meshToTreeNormal(mesh,mode,max_depth);
 }
@@ -127,7 +127,11 @@ MultiTreeNode* MultiTreeManager::meshToTreeNormal(Mesh mesh, MultiTreeManager::C
     return root;
 }
 
-MultiTreeNode* MultiTreeManager::meshToTreeDF(Mesh mesh, int max_depth){
+MultiTreeNode* MultiTreeManager::meshToTreeDF(Mesh mesh, int max_depth, int mode){
+
+    // In case of wrong usage, assing default depth first expantion mode
+    if(mode != 0 && mode != 1 && mode != 2)
+        mode = 0;
 
     Dual dual(mesh);
     FiniteDual finiteDual(dual,noborder<Mesh>(mesh));
@@ -171,9 +175,6 @@ MultiTreeNode* MultiTreeManager::meshToTreeDF(Mesh mesh, int max_depth){
                 curr_node->parent = front_element;
                 curr_node->level = curr_node->parent->level + 1;
 
-                /*curr_node->prev = cursor;
-                curr_node->prev->next = curr_node;*/
-
                 state++;
 
                 switch (state) {
@@ -188,18 +189,21 @@ MultiTreeNode* MultiTreeManager::meshToTreeDF(Mesh mesh, int max_depth){
                         break;
                 }
 
-                //cursor = curr_node;
                 node_map.insert({*ai,curr_node});
                 tmp_queue.push_back(curr_node);
             }
         }
 
         tree_stack.pop();
-        if(!flip) {
+
+        if (mode == 0) {
             std::reverse(tmp_queue.begin(), tmp_queue.end());
-            flip = true;
-        } else
-            flip = false;
+        } else if (mode == 1) {
+            if (!flip) {
+                std::reverse(tmp_queue.begin(), tmp_queue.end());
+            }
+            flip = !flip;
+        }
 
         for (auto &node : tmp_queue) {
             node->prev = cursor;

@@ -25,7 +25,7 @@ void MultiTreePartitioner::configParameters(int search_depth, int threshold, int
 std::vector<int> MultiTreePartitioner::partitionByNumber(MultiTreeNode *last, MultiTreeNode* root, int num_elements) {
     mNumGroups = 0;
     mRoots = new std::vector<std::vector<MultiTreeNode*>*>();
-    mFaceGroupId = new std::map<boost::graph_traits<Mesh>::face_descriptor,int>();
+    mFaceGroupId = new std::unordered_map<boost::graph_traits<Mesh>::face_descriptor,int>();
     MultiTreeNode* curr_node = last;
     std::vector<int>* group_ids = new std::vector<int>(num_elements,-1);
 
@@ -523,7 +523,7 @@ void MultiTreePartitioner::cutTree (MultiTreeNode* sub_root, std::vector<int>* g
     if(sub_root->valid) {
         sub_root->valid = false;
         group_list->at(sub_root->id) = mNumGroups;
-        mFaceGroupId->insert({sub_root->id,mNumGroups});
+        //mFaceGroupId->insert({sub_root->id,mNumGroups});
         cutTree(sub_root->left,group_list);
         cutTree(sub_root->right,group_list);
         if(sub_root->parent == nullptr)
@@ -578,6 +578,6 @@ std::vector<std::vector<MultiTreeNode*>*>* MultiTreePartitioner::getRoots() {
     return mRoots;
 }
 
-std::map<boost::graph_traits<Mesh>::face_descriptor,int>* MultiTreePartitioner::getFaceGroupMap() {
+std::unordered_map<boost::graph_traits<Mesh>::face_descriptor,int>* MultiTreePartitioner::getFaceGroupMap() {
     return mFaceGroupId;
 }

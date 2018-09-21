@@ -36,7 +36,7 @@ public:
 private:
     MultiTreeNode *meshToTreeNormal(Mesh mesh, CreationMode mode, int max_depth);
 
-    MultiTreeNode *meshToTreeDF(Mesh mesh, int max_depth);
+    MultiTreeNode *meshToTreeDF(Mesh mesh, int max_depth, int mode);
 
     MultiTreeNode *meshToTreeThin(Mesh mesh, CreationMode mode);
 

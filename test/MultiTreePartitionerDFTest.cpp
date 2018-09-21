@@ -1,5 +1,5 @@
 //
-// Created by matteo on 10/08/18.
+// Created by matteo on 21/09/18.
 //
 #include <MultiTreePartitioner.h>
 #include <cstdio>
@@ -57,7 +57,7 @@ int main (int argc, char* argv[]) {
 
     std::cout << "Converting mesh to multi level tree..." << std::endl;
     stopwatch.start();
-    MultiTreeNode* root = tree_manager.meshToTree(mesh, MultiTreeManager::CreationMode::RTL,100);
+    MultiTreeNode* root = tree_manager.meshToTree(mesh, MultiTreeManager::CreationMode::DF,0);
     elapsed_time = stopwatch.stop();
     total_time = total_time + elapsed_time;
     std::cout << "DONE in " << elapsed_time << " seconds" << std::endl << std::endl;
@@ -71,7 +71,7 @@ int main (int argc, char* argv[]) {
     int K = 8;
     int thresh = num_nodes / K;
     MultiTreePartitioner partitioner;
-    partitioner.configParameters(10,thresh,15,K);
+    partitioner.configParameters(0,thresh,5,K);
 
     std::cout << "Partitioning tree..." << std::endl;
     stopwatch.start();
@@ -87,8 +87,8 @@ int main (int argc, char* argv[]) {
         if(group_id != -1)
             num_elem.at(group_id)++;
     }
-exit(0);
-    std::string partition_filename = "../../data/Watermarking/" + selected_mesh + "/" + selected_mesh + "_mtp.txt";
+
+    std::string partition_filename = "../../data/Watermarking/" + selected_mesh + "/" + selected_mesh + "_mtp_df.txt";
     std::ofstream outfile(partition_filename);
     int min_pos = static_cast<int>(std::distance(num_elem.begin(), std::min_element(num_elem.begin(), num_elem.end())));
     for (int group_id : group_ids) {
@@ -103,14 +103,14 @@ exit(0);
 
     std::cout << "Breaking the mesh..." << std::endl;
     stopwatch.start();
-    std::vector<Mesh> meshes = mesh_manager.breakMesh(mesh,std::string("../../data/Watermarking/" + selected_mesh + "/" + selected_mesh + "_mtp.txt"));
+    std::vector<Mesh> meshes = mesh_manager.breakMesh(mesh,std::string("../../data/Watermarking/" + selected_mesh + "/" + selected_mesh + "_mtp_df.txt"));
     elapsed_time = stopwatch.stop();
     total_time = total_time + elapsed_time;
     std::cout << "DONE in " << elapsed_time << " seconds" << std::endl << std::endl;
 
     std::cout << "Writing the sub-meshes to .off files..." << std::endl;
     stopwatch.start();
-    input_manager.writeMeshToOff(meshes,std::string("../../data/Watermarking/" + selected_mesh + "/MTP/" + selected_mesh));
+    input_manager.writeMeshToOff(meshes,std::string("../../data/Watermarking/" + selected_mesh + "/MTP_DF/" + selected_mesh));
     elapsed_time = stopwatch.stop();
     total_time = total_time + elapsed_time;
     std::cout << "DONE in " << elapsed_time << " seconds" << std::endl << std::endl;

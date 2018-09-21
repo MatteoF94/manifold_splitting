@@ -124,7 +124,7 @@ int main (int argc, char* argv[]) {
     }
     for (int j = 0; j < K; j++)
         std::cout << "C" << j << ": " << num_elem.at(j) << std::endl;
-//exit(0);
+
     /*------------------------------------------------------------------------------*/
 
     std::vector<std::vector<MultiTreeNode*>*>* roots_set = partitioner.getRoots();
