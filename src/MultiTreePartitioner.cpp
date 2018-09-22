@@ -260,7 +260,7 @@ MultiTreePartitioner::LinkageState MultiTreePartitioner::checkRelatives(MultiTre
     stack->push_back(node);
     sum = sum + node->value;
     if (sum >= mThreshold && sum <= mThreshold*(1.0 + double(mEpsilon)/100.0)) {
-        std::vector<MultiTreeNode*>* curr_cut = new std::vector<MultiTreeNode*>(stack->size());
+        std::vector<MultiTreeNode*>* curr_cut = new std::vector<MultiTreeNode*>();
         for (auto &i : *stack) {
             propagateValueCut(i);
             cutTree(i, groups);

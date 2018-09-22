@@ -434,8 +434,8 @@ void MultiTreeManager::linkTrees(std::vector<MultiTreeNode*>* tree_roots) {
             continue;
         }
 
-        if(curr_root->left == nullptr) {
-            curr_root->left = tree_roots->at(i+1);
+        if(curr_root->right == nullptr) {
+            curr_root->right = tree_roots->at(i+1);
             tree_roots->at(i+1)->parent = curr_root;
             continue;
         }
