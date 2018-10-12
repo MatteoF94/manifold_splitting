@@ -130,7 +130,7 @@ Eigen::MatrixXf createTestSimilarityMatrix() {
 
 int main(int argc, char* argv[]) {
 
-    /*bool show_phase1_clustering = false;
+    bool show_phase1_clustering = false;
     Stopwatch stopwatch;
     double elapsed, total_time = 0;
     if (argc == 2) {
@@ -244,17 +244,17 @@ int main(int argc, char* argv[]) {
         cv::imwrite(file_path.str().c_str(),out_img);
     }
 
-    std::cout << "Total elapsed time: " << total_time << " seconds" << std::endl;*/
+    std::cout << "Total elapsed time: " << total_time << " seconds" << std::endl;
 
     /*Eigen::MatrixXf test_labels = Eigen::MatrixXf::Identity(3,3);
     SpectralClustering spectral_clustering(test_labels,3);
     spectral_clustering.setupEigenvectors();
     cv::Mat phase2_labels = spectral_clustering.clusterKmeans(3);*/
 
-    cv::Mat_<float> miao, miaone(1024,768);
+    //cv::Mat_<float> miao, miaone(1024,768);
     //cv::resize(miao,miao,cv::Size(1024,768),0,0,cv::INTER_LINEAR);
-    miao = miaone.clone();
-    std::cout << miao.rows << std::endl;
-    std::cout << miao.cols << std::endl;
+    //miao = miaone.clone();
+    //std::cout << miao.rows << std::endl;
+    //std::cout << miao.cols << std::endl;
 
 }

@@ -13,6 +13,7 @@
 #include <CGAL/boost/graph/Face_filtered_graph.h>
 
 #include <CGAL/Polygon_mesh_processing/connected_components.h>
+#include <CGAL/Polygon_mesh_processing/stitch_borders.h>
 
 #include <boost/graph/connected_components.hpp>
 #include <boost/foreach.hpp>
@@ -61,6 +62,7 @@ Mesh InputManager::readMeshFromOff(const std::string filename) {
 
     inputMesh = mesh;
     infile.close();
+    CGAL::Polygon_mesh_processing::stitch_borders(mesh);
     std::cout << "Loaded MESH properties: " << std::endl;
     std::cout << "- " << mesh.num_vertices() << " vertices" << std::endl;
     std::cout << "- " << mesh.num_faces() << " faces" << std::endl;
@@ -72,14 +74,13 @@ Mesh InputManager::readMeshFromOff(const std::string filename) {
     boost::tie(fcolors, has_fcolors) = mesh.property_map<Mesh::Face_index, CGAL::Color >("f:color");
     std::cout << "- " << (has_fcolors ? "is colored" : "is not colored") << std::endl;
 
-
-    BOOST_FOREACH(face_descriptor fd, faces(mesh)){
+    /*BOOST_FOREACH(face_descriptor fd, faces(mesh)){
         if(has_fcolors)
         {
             CGAL::Color color = fcolors[fd];
             std::cout << "face: " << fd << " has RGB color: " << color << std::endl;
         }
-    }
+    }*/
 
     // Find connected components of the mesh
     Mesh::Property_map<face_descriptor,int> fccmap;
@@ -87,11 +88,11 @@ Mesh InputManager::readMeshFromOff(const std::string filename) {
     int num = CGAL::Polygon_mesh_processing::connected_components(mesh,fccmap);
 
     std::cout << "- " << num << " connected components (face connectivity): " << std::endl;
-    for (int i = 0; i < num; i++) {
+    /*for (int i = 0; i < num; i++) {
         std::cout << "  \tcomponent " << i << " has ";
         CGAL::Face_filtered_graph<Mesh> ffg(mesh,i,fccmap);
         std::cout << num_faces(ffg) << " faces" << std::endl;
-    }
+    }*/
 
 
     // ----- UNCOMMENT below to show to which component each face belongs to -----
@@ -149,7 +150,7 @@ Graph InputManager::meshToGraphDual() {
         std::cout << f << " in connected component " << fccmap[f] << std::endl;
     }*/
 
-    mesh.add_property_map<face_descriptor,CGAL::Color>("f:color<").first;
+    //mesh.add_property_map<face_descriptor,CGAL::Color>("f:color<").first;
 
     // Create a map face-identifier for the loaded mesh
     boost::property_map<Mesh,boost::face_index_t >::type face_id_map = get(boost::face_index,mesh);

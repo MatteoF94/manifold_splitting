@@ -99,7 +99,7 @@ void KLabelPartitioner::clusterCyclically() {
     std::list<SnapShotStruct>::iterator snap_it = snapshot_list.begin();
 
     while(!snapshot_list.empty()) {
-
+        //std::cout << "Current id: " << snap_it->descriptor << " and stage: " << snap_it->stage << std::endl;
         switch (snap_it->stage) {
             case 0:
 
@@ -164,16 +164,18 @@ void KLabelPartitioner::clusterCyclically() {
                 break;
 
             case 2:
+                if(snap_it->descriptor == 0)
+                    std::cout << "OI MATE" << std::endl;
 
-            if(snap_it != snapshot_list.begin())
-                snap_it--;
-            snapshot_list.pop_back();
+                if(snap_it != snapshot_list.begin())
+                    snap_it--;
+                snapshot_list.pop_back();
 
                 break;
         }
     }
 
-    boost::print_graph(mReducedGraph);
+    //boost::print_graph(mReducedGraph);
 }
 
 std::vector<VertexInfo> KLabelPartitioner::createClusters() {
@@ -187,6 +189,7 @@ std::vector<VertexInfo> KLabelPartitioner::createClusters() {
     boost::graph_traits<Graph>::vertex_iterator vb,ve;
     for(boost::tie(vb,ve) = vertices(mGraph); vb != ve; ++vb) {
         int curr_group = mVertexGroupMap[*vb];
+        if(curr_group == -1) curr_group = 0;
         mReducedGraphNodes.at(curr_group).nodes.push_back(*vb);
     }
 

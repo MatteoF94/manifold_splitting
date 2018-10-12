@@ -19,12 +19,17 @@ SpectralClustering::~SpectralClustering() {
 
 void SpectralClustering::setupEigenvectors(){
     Eigen::MatrixXf deg = Eigen::MatrixXf::Zero(mSimilarityMat.rows(),mSimilarityMat.cols());
+    Eigen::MatrixXf ones = Eigen::MatrixXf::Ones(mSimilarityMat.rows(),mSimilarityMat.cols());
 
     for (unsigned int i = 0; i < mSimilarityMat.cols(); i++) {
         deg(i,i) = 1.0/(sqrt((mSimilarityMat.row(i).sum())));
     }
 
-    Eigen::MatrixXf laplacian = deg*mSimilarityMat*deg;
+    //Eigen::MatrixXf laplacian = deg*mSimilarityMat*deg;
+            Eigen::MatrixXf laplacian = deg*mSimilarityMat;
+    laplacian.noalias() = ones - laplacian*deg;
+    std::cout << "My data: " << deg << std::endl;
+    //std::cout << "My data: " << mSimilarityMat << std::endl;
     Eigen::SelfAdjointEigenSolver<Eigen::MatrixXf> solver(laplacian);
 
     Eigen::VectorXf eigenvalues = solver.eigenvalues();
@@ -49,7 +54,7 @@ void SpectralClustering::setupEigenvectors(){
         mEigenVectors = eigenvectors;
     }
 
-    //mEigenVectors.rowwise().normalize();
+    mEigenVectors.rowwise().normalize();
 }
 
 cv::Mat SpectralClustering::clusterKmeans(int num_clusters) {
@@ -61,8 +66,6 @@ cv::Mat SpectralClustering::clusterKmeans(int num_clusters) {
     cv::Mat data(num_elements,num_features,CV_32F);
 
     cv::eigen2cv(mEigenVectors,data);
-
-    //std::cout << "My data: " << data << std::endl;
 
     int clusterCount = num_clusters;
     cv::Mat labels;

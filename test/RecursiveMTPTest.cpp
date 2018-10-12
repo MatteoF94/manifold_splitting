@@ -82,7 +82,8 @@ std::string selectMesh(int mesh_idx) {
 int main (int argc, char* argv[]) {
 
     std::string selected_mesh = selectMesh(8);
-    std::string input_filename = "../../data/Watermarking/" + selected_mesh + "/" + selected_mesh + ".off";
+    //std::string input_filename = "../../data/Watermarking/" + selected_mesh + "/" + selected_mesh + ".off";
+    std::string input_filename("/home/matteo/Desktop/filtered/filtered/Labeling_SouthbuildingOverl_Local__0.2_0.2_0.2_1_filtered.off");
 
     InputManager input_manager;
     MeshManager mesh_manager;

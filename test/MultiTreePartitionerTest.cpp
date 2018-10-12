@@ -40,7 +40,9 @@ std::string selectMesh(int mesh_idx) {
 int main (int argc, char* argv[]) {
 
     std::string selected_mesh = selectMesh(0);
-    std::string input_filename = "../../data/Watermarking/" + selected_mesh + "/" + selected_mesh + ".off";
+    //std::string input_filename = "../../data/Watermarking/" + selected_mesh + "/" + selected_mesh + ".off";
+    std::string input_filename("/home/matteo/Desktop/meshes/Castle.off");
+
 
     InputManager input_manager;
     MeshManager mesh_manager;
@@ -57,7 +59,7 @@ int main (int argc, char* argv[]) {
 
     std::cout << "Converting mesh to multi level tree..." << std::endl;
     stopwatch.start();
-    MultiTreeNode* root = tree_manager.meshToTree(mesh, MultiTreeManager::CreationMode::RTL,100);
+    MultiTreeNode* root = tree_manager.meshToTree(mesh, MultiTreeManager::CreationMode::BALANCED,100);
     elapsed_time = stopwatch.stop();
     total_time = total_time + elapsed_time;
     std::cout << "DONE in " << elapsed_time << " seconds" << std::endl << std::endl;
@@ -87,8 +89,12 @@ int main (int argc, char* argv[]) {
         if(group_id != -1)
             num_elem.at(group_id)++;
     }
-exit(0);
-    std::string partition_filename = "../../data/Watermarking/" + selected_mesh + "/" + selected_mesh + "_mtp.txt";
+
+
+//exit(0);
+    //std::string partition_filename = "../../data/Watermarking/" + selected_mesh + "/" + selected_mesh + "_mtp.txt";
+    std::string partition_filename = "../../data/castle_mtp.txt";
+
     std::ofstream outfile(partition_filename);
     int min_pos = static_cast<int>(std::distance(num_elem.begin(), std::min_element(num_elem.begin(), num_elem.end())));
     for (int group_id : group_ids) {
@@ -100,17 +106,19 @@ exit(0);
 
     for (int j = 0; j < K; j++)
         std::cout << "C" << j << ": " << num_elem.at(j) << std::endl;
-
+//exit(0);
     std::cout << "Breaking the mesh..." << std::endl;
     stopwatch.start();
-    std::vector<Mesh> meshes = mesh_manager.breakMesh(mesh,std::string("../../data/Watermarking/" + selected_mesh + "/" + selected_mesh + "_mtp.txt"));
+    //std::vector<Mesh> meshes = mesh_manager.breakMesh(mesh,std::string("../../data/Watermarking/" + selected_mesh + "/" + selected_mesh + "_mtp.txt"));
+    std::vector<Mesh> meshes = mesh_manager.breakMesh(mesh,std::string("../../data/castle_mtp.txt"));
     elapsed_time = stopwatch.stop();
     total_time = total_time + elapsed_time;
     std::cout << "DONE in " << elapsed_time << " seconds" << std::endl << std::endl;
 
     std::cout << "Writing the sub-meshes to .off files..." << std::endl;
     stopwatch.start();
-    input_manager.writeMeshToOff(meshes,std::string("../../data/Watermarking/" + selected_mesh + "/MTP/" + selected_mesh));
+    //input_manager.writeMeshToOff(meshes,std::string("../../data/Watermarking/" + selected_mesh + "/MTP/" + selected_mesh));
+    input_manager.writeMeshToOff(meshes,std::string("../../data/Castle/castle_mpt"));
     elapsed_time = stopwatch.stop();
     total_time = total_time + elapsed_time;
     std::cout << "DONE in " << elapsed_time << " seconds" << std::endl << std::endl;

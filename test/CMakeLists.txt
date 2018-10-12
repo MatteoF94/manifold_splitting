@@ -74,6 +74,14 @@ add_executable(MPITest
         MPITest.cpp
         )
 
+add_executable(GeneralPartitioningTest
+        GeneralPartitioningTest.cpp
+        ../src/MeshManager.cpp
+        ../src/InputManager.cpp
+        ../src/KLabelPartitioner.cpp
+        ../src/KSizeClustering.cpp
+        ../src/SpectralClustering/SpectralClustering.cpp)
+
 target_link_libraries(KLabelPartitionerTest
         ${OpenCV_LIBS}
         ${CGAL_LIBRARY}
@@ -119,6 +127,13 @@ target_link_libraries(MultiTreePartitionerDFTest
 target_link_libraries(RecursiveMTPTest
         ${CGAL_LIBRARY}
         gmp
+        )
+
+target_link_libraries(GeneralPartitioningTest
+        ${OpenCV_LIBS}
+        ${CGAL_LIBRARY}
+        gmp
+        ${Eigen3_LIBRARY}
         )
 
 target_link_libraries(MPITest

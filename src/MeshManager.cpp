@@ -4,8 +4,10 @@
 
 #include <CGAL/Polygon_mesh_processing/connected_components.h>
 #include <CGAL/Polygon_mesh_processing/stitch_borders.h>
+#include <boost/property_map/property_map.hpp>
 #include <CGAL/centroid.h>
 #include <fstream>
+#include <unordered_map>
 #include "MeshManager.h"
 
 typedef boost::adjacency_list<boost::setS,boost::vecS,boost::undirectedS> Graph;
@@ -135,8 +137,10 @@ std::vector<Mesh> MeshManager::breakMesh(Mesh mesh, std::string divisionFileName
     }
 
     int num_parts = 1 + *std::max_element(flags.begin(),flags.end());
-    //Mesh splittedMeshes[num_parts];
+
     std::vector<Mesh> splittedMeshes(num_parts);
+    std::vector<std::unordered_map<boost::graph_traits<Mesh>::face_descriptor,boost::graph_traits<Mesh>::face_descriptor>> mesh_submesh_map;
+
     std::map<Point,boost::graph_traits<Mesh>::vertex_descriptor> newVertices[num_parts];
     std::unordered_map<boost::graph_traits<Mesh>::vertex_descriptor,std::pair<int,int>> assigned_vertices;
 
@@ -145,8 +149,23 @@ std::vector<Mesh> MeshManager::breakMesh(Mesh mesh, std::string divisionFileName
         assigned_vertices.insert({vd,tmp});
     }
 
+    for(int i = 0; i < num_parts; ++i) {
+        std::unordered_map<boost::graph_traits<Mesh>::face_descriptor,boost::graph_traits<Mesh>::face_descriptor> new_map;
+        mesh_submesh_map.push_back(new_map);
+        /*Mesh single_mesh = splittedMeshes.at(i);
+        bool has_fcolors;
+        single_mesh.add_property_map<Mesh::Face_index,CGAL::Color>("f:color");
+        Mesh::Property_map<Mesh::Face_index, CGAL::Color> curr_color_map;
+        boost::tie(curr_color_map,has_fcolors) = single_mesh.property_map<Mesh::Face_index, CGAL::Color >("f:color");
+        fcolors.push_back(curr_color_map);*/
+    }
+
+    Mesh::Property_map<Mesh::Face_index, CGAL::Color> mesh_color_map;
+    bool has_fcolors;
+    boost::tie(mesh_color_map, has_fcolors) = mesh.property_map<Mesh::Face_index, CGAL::Color >("f:color");
+
     for (boost::graph_traits<Mesh>::face_iterator face_iterator = mesh.faces_begin(); face_iterator != mesh.faces_end(); ++face_iterator) {
-        //std::unordered_map<boost::graph_traits<FiniteDual>::vertex_descriptor,boost::graph_traits<Graph>::vertex_descriptor>::const_iterator it = myMap.find(*face_iterator);
+
         int currMeshIdx = flags.at(*face_iterator);
         std::vector<boost::graph_traits<Mesh>::vertex_descriptor> vrtcs;
 
@@ -167,8 +186,30 @@ std::vector<Mesh> MeshManager::breakMesh(Mesh mesh, std::string divisionFileName
                 vrtcs.push_back(newVertices[currMeshIdx][p]);
         }
 
-        // Exploiting the concept of RANGE (from boost) we can use directly the container
-        splittedMeshes[currMeshIdx].add_face(vrtcs);
+
+        if(vrtcs.at(0) != vrtcs.at(1) && vrtcs.at(1) != vrtcs.at(2) && vrtcs.at(0) != vrtcs.at(2)) {
+            boost::graph_traits<Mesh>::face_descriptor face_index = splittedMeshes[currMeshIdx].add_face(vrtcs);
+            mesh_submesh_map.at(currMeshIdx).insert({face_index, *face_iterator});
+        }
+    }
+
+    if(has_fcolors) {
+        for (int i = 0; i < mesh_submesh_map.size(); ++i) {
+            std::unordered_map<boost::graph_traits<Mesh>::face_descriptor, boost::graph_traits<Mesh>::face_descriptor> map = mesh_submesh_map.at(
+                    i);
+            splittedMeshes[i].add_property_map<Mesh::Face_index, CGAL::Color>("f:color");
+            Mesh::Property_map <Mesh::Face_index, CGAL::Color> fcolors;
+            bool has_fcolors;
+            boost::tie(fcolors, has_fcolors) = splittedMeshes[i].property_map<Mesh::Face_index, CGAL::Color>("f:color");
+            std::unordered_map<boost::graph_traits<Mesh>::face_descriptor, boost::graph_traits<Mesh>::face_descriptor> curr_map = mesh_submesh_map.at(
+                    i);
+
+            for (boost::graph_traits<Mesh>::face_descriptor &fd : faces(splittedMeshes[i])) {
+                boost::graph_traits<Mesh>::face_descriptor original_desc = curr_map.at(fd);
+                CGAL::Color color = mesh_color_map[original_desc];
+                put(fcolors, fd, color);
+            }
+        }
     }
 
     return splittedMeshes;
@@ -272,3 +313,38 @@ std::map<boost::graph_traits<Mesh>::face_descriptor,Point> MeshManager::computeF
 
     return faces_centroid_map;
 };
+
+bool operator<(const CGAL::Color& c1, const CGAL::Color& c2) {
+    return (c1.red() < c2.red())
+           || ((c1.green() < c2.green()) && (c1.red() == c2.red()))
+           || ((c1.blue() < c2.blue()) && (c1.red() == c2.red()) && (c1.green() == c2.green())) ;
+}
+
+std::vector<int> MeshManager::getMeshLabels(Mesh mesh) {
+
+    std::vector<int> mesh_labels;
+
+    typename Mesh::Property_map<Mesh::Face_index, CGAL::Color> fcolors;
+    bool has_fcolors;
+    boost::tie(fcolors, has_fcolors) = mesh.property_map<Mesh::Face_index, CGAL::Color >("f:color");
+    std::vector<int> active_colors;
+    std::unordered_map<int,int> color_map;
+    int color_index = 0;
+
+    if(has_fcolors) {
+        BOOST_FOREACH(boost::graph_traits<Mesh>::face_descriptor fd, faces(mesh)) {
+            CGAL::Color color = fcolors[fd];
+            int color_id = 256^2*color.red() + 256*color.green() + color.blue();
+            auto cit = std::find(active_colors.begin(),active_colors.end(),color_id);
+            if(cit == active_colors.end()) {
+                active_colors.push_back(color_id);
+                color_map.insert({color_id,color_index});
+                color_index++;
+            }
+
+            mesh_labels.push_back(color_map.at(color_id));
+        }
+    }
+
+    return mesh_labels;
+}
