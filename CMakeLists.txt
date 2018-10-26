@@ -11,6 +11,7 @@ find_package(GMP REQUIRED)
 find_package(OpenCV REQUIRED)
 
 find_package(MPI REQUIRED)
+find_package(OpenMP REQUIRED)
 
 include_directories(include)
 include_directories(src/SpectralClustering)
@@ -20,6 +21,7 @@ include_directories(
         ${OpenCV_INCLUDE_DIRS}
         ${Boost_INCLUDE_DIRS}
         ${MPI_INCLUDE_PATH}
+        ${OpenMP_INCLUDE_PATH}
 )
 
 

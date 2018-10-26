@@ -6,7 +6,10 @@
 #include <stack>
 #include <vector>
 #include <queue>
+#include <stopwatch.h>
 #include "MultiTreeManager.h"
+#include <omp.h>
+#include <MTSerialCreator.h>
 
 MultiTreeNode* MultiTreeManager::meshToTree(Mesh mesh, MultiTreeManager::CreationMode mode, int max_depth) {
     if(mode == CreationMode::THIN)
@@ -17,17 +20,24 @@ MultiTreeNode* MultiTreeManager::meshToTree(Mesh mesh, MultiTreeManager::Creatio
         return meshToTreeNormal(mesh,mode,max_depth);
 }
 
-MultiTreeNode* MultiTreeManager::meshToTreeNormal(Mesh mesh, MultiTreeManager::CreationMode mode, int max_depth){
+/*MultiTreeNode* MultiTreeManager::meshToTreeNormal(Mesh mesh, MultiTreeManager::CreationMode mode, int max_depth){
 
+    Stopwatch stopwatch;
+    stopwatch.start();
     Dual dual(mesh);
+    double elapsed = stopwatch.stop();
+    std::cout << "Conversion took " << elapsed << " seconds" << std::endl;
     FiniteDual finiteDual(dual,noborder<Mesh>(mesh));
     boost::graph_traits<FiniteDual>::vertex_iterator vb,ve;
     boost::tie(vb,ve) = boost::vertices(finiteDual);
 
     std::map<int,bool> inserted_map;
+    stopwatch.start();
     for(int i = 0; i < boost::num_vertices(finiteDual); i++) {
         inserted_map.insert({i,false});
     }
+    elapsed = stopwatch.stop();
+    std::cout << "Map creation took " << elapsed << " seconds" << std::endl;
 
     std::unordered_map<boost::graph_traits<FiniteDual>::vertex_descriptor, MultiTreeNode*> node_map;
     std::vector<MultiTreeNode*> tree_queue;
@@ -44,6 +54,8 @@ MultiTreeNode* MultiTreeManager::meshToTreeNormal(Mesh mesh, MultiTreeManager::C
 
     bool balanced_ltr = false;
     bool to_flip = false;
+
+    //MultiTreeNode* front_element = tree_queue.front();
 
     while (!tree_queue.empty()) {
         boost::graph_traits<FiniteDual>::adjacency_iterator ai,ai_end;
@@ -122,10 +134,269 @@ MultiTreeNode* MultiTreeManager::meshToTreeNormal(Mesh mesh, MultiTreeManager::C
                 balanced_ltr = !balanced_ltr;
             }
         }
+
+        //front_element = front_element->next;
+    }
+
+    return root;
+}*/
+
+MultiTreeNode* MultiTreeManager::meshToTreeNormal(Mesh mesh, MultiTreeManager::CreationMode mode, int max_depth){
+
+    Stopwatch stopwatch;
+    stopwatch.start();
+    Dual dual(mesh);
+    double elapsed = stopwatch.stop();
+    std::cout << "Conversion took " << elapsed << " seconds" << std::endl;
+    FiniteDual finiteDual(dual,noborder<Mesh>(mesh));
+
+    MTSerialCreator creator;
+    //return creator.createSerialTree(finiteDual,CreationMode::RTL,max_depth);
+
+    boost::graph_traits<FiniteDual>::vertex_iterator vb,ve;
+    boost::tie(vb,ve) = boost::vertices(finiteDual);
+
+    stopwatch.start();
+    std::vector<bool> inserted_map(boost::num_vertices(finiteDual),false);
+
+    elapsed = stopwatch.stop();
+    std::cout << "Map creation took " << elapsed << " seconds" << std::endl;
+
+    std::vector<MultiTreeNode*> node_real(boost::num_vertices(finiteDual),nullptr);
+    std::vector<std::vector<boost::graph_traits<FiniteDual>::vertex_descriptor>> relatives_id(boost::num_vertices(finiteDual));
+    auto * root = new MultiTreeNode;
+    root->level = 0;
+    root->value = 1;
+    root->id = (*vb);
+
+    inserted_map.at(*vb) = true;
+    node_real.at(0) = root;
+    MultiTreeNode* front_elemento = root;
+
+    boost::graph_traits<FiniteDual>::adjacency_iterator aii,aii_end;
+    int state_first = 0;
+    for (boost::tie(aii,aii_end)=boost::adjacent_vertices(front_elemento->id,finiteDual);aii != aii_end; ++aii) {
+        if (!inserted_map.at(*aii)) {
+            inserted_map.at(*aii) = true;
+
+            auto *curr_node = new MultiTreeNode;
+            curr_node->id = *aii;
+            curr_node->parent = front_elemento;
+            curr_node->level = curr_node->parent->level + 1;
+
+            state_first++;
+
+            switch (state_first) {
+                case 1:
+                    curr_node->parent->left = curr_node;
+                    break;
+                case 2:
+                    curr_node->parent->right = curr_node;
+                    break;
+                default:
+                    curr_node->parent->mid = curr_node; // Reached only for the root...
+                    break;
+            }
+
+            node_real.at(*aii) = curr_node;
+        }
+    }
+omp_lock_t insertion_lock;
+    omp_init_lock(&insertion_lock);
+#pragma omp parallel num_threads(3) shared(inserted_map,node_real)
+{
+        MultiTreeNode* front_element;
+    MultiTreeNode* cursor;
+    switch (omp_get_thread_num()) {
+        case 0:
+            front_element = front_elemento->left;
+            break;
+        case 1:
+            front_element = front_elemento->right;
+            break;
+        case 2:
+            front_element = front_elemento->mid;
+            break;
+    }
+    cursor = front_element;
+    while (front_element != nullptr) {
+        boost::graph_traits<FiniteDual>::adjacency_iterator ai,ai_end;
+
+        int state = 0;
+
+        for (boost::tie(ai,ai_end)=boost::adjacent_vertices(front_element->id,finiteDual);ai != ai_end; ++ai) {
+            bool flag = false;
+
+            omp_set_lock(&insertion_lock);
+            if(!inserted_map.at(*ai)) {
+                inserted_map.at(*ai) = true;
+                flag = true;
+            }
+            omp_unset_lock(&insertion_lock);
+
+            if(flag) {
+
+                auto *curr_node = new MultiTreeNode;
+                curr_node->id = *ai;
+                curr_node->parent = front_element;
+                curr_node->level = curr_node->parent->level + 1;
+
+                state++;
+
+                switch (state) {
+                    case 1:
+                        curr_node->parent->left = curr_node;
+                        break;
+                    case 2:
+                        curr_node->parent->right = curr_node;
+                        break;
+                    default:
+                        curr_node->parent->mid = curr_node; // Reached only for the root...
+                        break;
+                }
+
+                node_real.at(*ai) = curr_node;
+
+                curr_node->prev = cursor;
+                if(cursor != nullptr)
+                    curr_node->prev->next = curr_node;
+                cursor = curr_node;
+
+            } else if(front_element->parent->id != *ai) {
+                relatives_id.at(*ai).push_back(front_element->id);
+            }
+
+        }
+        front_element = front_element->next;
+    }
+    }
+
+    #pragma omp parallel for num_threads(4)
+        for (int i = 0; i < relatives_id.size(); ++i) {
+            std::vector<boost::graph_traits<FiniteDual>::vertex_descriptor> elem = relatives_id.at(i);
+            if(!elem.empty()) {
+                for(boost::graph_traits<FiniteDual>::vertex_descriptor dsc : elem) {
+                    node_real.at(i)->relatives.push_back(node_real.at(dsc));
+                }
+            }
+        }
+
+    std::vector<MultiTreeNode*> tree_queue;
+    tree_queue.reserve(boost::num_vertices(finiteDual));
+    tree_queue.push_back(root);
+    MultiTreeNode* cursor = nullptr;
+
+    int i = 0;
+    while(i < boost::num_vertices(finiteDual)) {
+        MultiTreeNode* curr_node = tree_queue.at(i);
+        curr_node->prev = cursor;
+        curr_node->next = nullptr;
+
+        if(curr_node->prev != nullptr)
+            curr_node->prev->next = curr_node;
+
+        if(curr_node->left != nullptr) {
+            tree_queue.push_back(curr_node->left);
+        }
+
+        if(curr_node->right != nullptr) {
+            tree_queue.push_back(curr_node->right);
+        }
+
+        if(curr_node->mid != nullptr) {
+            tree_queue.push_back(curr_node->mid);
+        }
+
+        cursor = curr_node;
+        ++i;
     }
 
     return root;
 }
+
+/*MultiTreeNode* MultiTreeManager::meshToTreeNormal(Mesh mesh, MultiTreeManager::CreationMode mode, int max_depth){
+
+    Stopwatch stopwatch;
+    stopwatch.start();
+    Dual dual(mesh);
+    double elapsed = stopwatch.stop();
+    std::cout << "Conversion took " << elapsed << " seconds" << std::endl;
+    FiniteDual finiteDual(dual,noborder<Mesh>(mesh));
+    boost::graph_traits<FiniteDual>::vertex_iterator vb,ve;
+    boost::tie(vb,ve) = boost::vertices(finiteDual);
+
+    stopwatch.start();
+    std::vector<bool> inserted_map(boost::num_vertices(finiteDual),false);
+
+    elapsed = stopwatch.stop();
+    std::cout << "Map creation took " << elapsed << " seconds" << std::endl;
+
+    std::vector<MultiTreeNode*> node_real(boost::num_vertices(finiteDual),nullptr);
+    auto * root = new MultiTreeNode;
+    root->level = 0;
+    root->value = 1;
+    root->id = int(*vb);
+
+    inserted_map.at(int(*vb)) = true;
+    MultiTreeNode* cursor = root;
+    MultiTreeNode* front_element = root;
+
+    while (front_element != nullptr) {
+        boost::graph_traits<FiniteDual>::adjacency_iterator ai,ai_end;
+
+        int state = 0;
+
+        for (boost::tie(ai,ai_end)=boost::adjacent_vertices(front_element->id,finiteDual);ai != ai_end; ++ai) {
+            if(!inserted_map.at(*ai)) {
+                inserted_map.at(*ai) = true;
+
+                auto *curr_node = new MultiTreeNode;
+                curr_node->id = *ai;
+                curr_node->parent = front_element;
+                curr_node->level = curr_node->parent->level + 1;
+
+                state++;
+
+                switch (state) {
+                    case 1:
+                        curr_node->parent->left = curr_node;
+                        break;
+                    case 2:
+                        curr_node->parent->right = curr_node;
+                        break;
+                    default:
+                        curr_node->parent->mid = curr_node; // Reached only for the root...
+                        break;
+                }
+
+
+                //node_map.insert({*ai,curr_node});
+                node_real.at(*ai) = curr_node;
+
+                    curr_node->prev = cursor;
+                    if(cursor != nullptr)
+                        curr_node->prev->next = curr_node;
+                    cursor = curr_node;
+
+            }
+            else
+
+                if(front_element->parent->id != *ai) {
+                    MultiTreeNode *old_node = node_real.at(*ai);
+
+
+                    if (front_element->level - old_node->level < max_depth &&
+                        front_element->level - old_node->level >= 0)
+                        old_node->relatives.push_back(front_element);
+                }
+
+        }
+
+        front_element = front_element->next;
+    }
+
+    return root;
+}*/
 
 MultiTreeNode* MultiTreeManager::meshToTreeDF(Mesh mesh, int max_depth, int mode){
 

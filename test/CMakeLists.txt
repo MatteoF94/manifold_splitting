@@ -52,6 +52,8 @@ add_executable(MultiTreePartitionerTest
         ../src/MultiTreePartitioner.cpp
         ../src/InputManager.cpp
         ../src/MultiTreeManager.cpp
+        ../src/MTSerialCreator.cpp
+        ../include/MTSerialCreator.h
         ../src/MeshManager.cpp
         )
 
@@ -117,12 +119,15 @@ target_link_libraries(ZoltanGraphPartitioningTest
 target_link_libraries(MultiTreePartitionerTest
         ${CGAL_LIBRARY}
         gmp
+        ${OpenMP_CXX_FLAGS}
         )
 
 target_link_libraries(MultiTreePartitionerDFTest
         ${CGAL_LIBRARY}
         gmp
         )
+
+target_compile_options(MultiTreePartitionerTest PUBLIC "${OpenMP_CXX_FLAGS}")
 
 target_link_libraries(RecursiveMTPTest
         ${CGAL_LIBRARY}
@@ -138,4 +143,9 @@ target_link_libraries(GeneralPartitioningTest
 
 target_link_libraries(MPITest
         ${MPI_LIBRARIES}
+        ${OpenMP_CXX_FLAGS}
+        )
+
+target_compile_options(MPITest PUBLIC
+        "${OpenMP_CXX_FLAGS}"
         )

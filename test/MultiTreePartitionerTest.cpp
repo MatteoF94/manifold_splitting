@@ -39,9 +39,9 @@ std::string selectMesh(int mesh_idx) {
 
 int main (int argc, char* argv[]) {
 
-    std::string selected_mesh = selectMesh(0);
-    //std::string input_filename = "../../data/Watermarking/" + selected_mesh + "/" + selected_mesh + ".off";
-    std::string input_filename("/home/matteo/Desktop/meshes/Castle.off");
+    std::string selected_mesh = selectMesh(8);
+    std::string input_filename = "../../data/Watermarking/" + selected_mesh + "/" + selected_mesh + ".off";
+    //std::string input_filename("/home/matteo/Desktop/meshes/Castle.off");
 
 
     InputManager input_manager;
@@ -63,7 +63,7 @@ int main (int argc, char* argv[]) {
     elapsed_time = stopwatch.stop();
     total_time = total_time + elapsed_time;
     std::cout << "DONE in " << elapsed_time << " seconds" << std::endl << std::endl;
-
+//exit(0);
     MultiTreeNode* last = root;
     int num_nodes = input_manager.getNumFaces();
     while (last->next != nullptr) {
@@ -73,7 +73,7 @@ int main (int argc, char* argv[]) {
     int K = 8;
     int thresh = num_nodes / K;
     MultiTreePartitioner partitioner;
-    partitioner.configParameters(10,thresh,15,K);
+    partitioner.configParameters(10,thresh,10,K);
 
     std::cout << "Partitioning tree..." << std::endl;
     stopwatch.start();
@@ -92,8 +92,8 @@ int main (int argc, char* argv[]) {
 
 
 //exit(0);
-    //std::string partition_filename = "../../data/Watermarking/" + selected_mesh + "/" + selected_mesh + "_mtp.txt";
-    std::string partition_filename = "../../data/castle_mtp.txt";
+    std::string partition_filename = "../../data/Watermarking/" + selected_mesh + "/" + selected_mesh + "_mtp.txt";
+    //std::string partition_filename = "../../data/castle_mtp.txt";
 
     std::ofstream outfile(partition_filename);
     int min_pos = static_cast<int>(std::distance(num_elem.begin(), std::min_element(num_elem.begin(), num_elem.end())));
@@ -106,7 +106,7 @@ int main (int argc, char* argv[]) {
 
     for (int j = 0; j < K; j++)
         std::cout << "C" << j << ": " << num_elem.at(j) << std::endl;
-//exit(0);
+exit(0);
     std::cout << "Breaking the mesh..." << std::endl;
     stopwatch.start();
     //std::vector<Mesh> meshes = mesh_manager.breakMesh(mesh,std::string("../../data/Watermarking/" + selected_mesh + "/" + selected_mesh + "_mtp.txt"));
