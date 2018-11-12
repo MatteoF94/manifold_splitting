@@ -152,12 +152,6 @@ std::vector<Mesh> MeshManager::breakMesh(Mesh mesh, std::string divisionFileName
     for(int i = 0; i < num_parts; ++i) {
         std::unordered_map<boost::graph_traits<Mesh>::face_descriptor,boost::graph_traits<Mesh>::face_descriptor> new_map;
         mesh_submesh_map.push_back(new_map);
-        /*Mesh single_mesh = splittedMeshes.at(i);
-        bool has_fcolors;
-        single_mesh.add_property_map<Mesh::Face_index,CGAL::Color>("f:color");
-        Mesh::Property_map<Mesh::Face_index, CGAL::Color> curr_color_map;
-        boost::tie(curr_color_map,has_fcolors) = single_mesh.property_map<Mesh::Face_index, CGAL::Color >("f:color");
-        fcolors.push_back(curr_color_map);*/
     }
 
     Mesh::Property_map<Mesh::Face_index, CGAL::Color> mesh_color_map;

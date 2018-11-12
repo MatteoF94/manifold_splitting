@@ -55,6 +55,9 @@ add_executable(MultiTreePartitionerTest
         ../src/MTSerialCreator.cpp
         ../include/MTSerialCreator.h
         ../src/MeshManager.cpp
+        ../src/MTVisualizer.cpp
+        ../src/MTParallelCreator.cpp
+        ../include/MTParallelCreator.h
         )
 
 add_executable(MultiTreePartitionerDFTest
@@ -120,6 +123,8 @@ target_link_libraries(MultiTreePartitionerTest
         ${CGAL_LIBRARY}
         gmp
         ${OpenMP_CXX_FLAGS}
+        ${OPENGL_LIBRARIES}
+        glfw
         )
 
 target_link_libraries(MultiTreePartitionerDFTest

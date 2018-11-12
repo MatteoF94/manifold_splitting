@@ -26,20 +26,20 @@ void changeFaceMapValues(std::unordered_map<boost::graph_traits<Mesh>::face_desc
 void fillMapByID(MultiTreeNode* root, std::unordered_map<boost::graph_traits<Mesh>::face_descriptor,int>* map, std::vector<int> ids) {
 
     while(root != nullptr) {
-        map->operator[](root->id) = ids.at(root->id);
-        root = root->next;
+        map->operator[](root->id_) = ids.at(root->id_);
+        root = root->next_;
     }
 }
 
 void printGivenLevel(MultiTreeNode* root, int level) {
     if (root == nullptr)
         return;
-    if(root->level == level)
-        std::cout << root->id << " ";
+    if(root->level_ == level)
+        std::cout << root->id_ << " ";
     else {
-        printGivenLevel(root->left,level);
-        printGivenLevel(root->right,level);
-        printGivenLevel(root->mid,level);
+        printGivenLevel(root->left_,level);
+        printGivenLevel(root->right_,level);
+        printGivenLevel(root->mid_,level);
     }
 }
 
@@ -107,8 +107,8 @@ int main (int argc, char* argv[]) {
 
     MultiTreeNode* last = root;
     int num_nodes = input_manager.getNumFaces();
-    while (last->next != nullptr) {
-        last = last->next;
+    while (last->next_ != nullptr) {
+        last = last->next_;
     }
 
     int K = 2;
@@ -143,16 +143,18 @@ int main (int argc, char* argv[]) {
 
     std::cout << "Regenerating first subtree..." << std::endl;
     stopwatch.start();
-    tree_manager.linkTrees(curr_roots_set_first);
-    tree_manager.regenerateTree(curr_roots_set_first->front(),group_ids);
+    tree_manager.regenerateTree(curr_roots_set_first,group_ids);
+    //tree_manager.linkTrees(curr_roots_set_first);
+    //tree_manager.regenerateTree(curr_roots_set_first->front(),group_ids);
     elapsed_time = stopwatch.stop();
     total_time = total_time + elapsed_time;
     std::cout << "DONE in " << elapsed_time << " seconds" << std::endl << std::endl;
 
     std::cout << "Regenerating second subtree..." << std::endl;
     stopwatch.start();
-    tree_manager.linkTrees(curr_roots_set_second);
-    tree_manager.regenerateTree(curr_roots_set_second->front(),group_ids);
+    tree_manager.regenerateTree(curr_roots_set_second,group_ids);
+    //tree_manager.linkTrees(curr_roots_set_second);
+    //tree_manager.regenerateTree(curr_roots_set_second->front(),group_ids);
     elapsed_time = stopwatch.stop();
     total_time = total_time + elapsed_time;
     std::cout << "DONE in " << elapsed_time << " seconds" << std::endl << std::endl;
@@ -160,12 +162,12 @@ int main (int argc, char* argv[]) {
     MultiTreeNode *curr_last_first = curr_roots_set_first->front();
     MultiTreeNode *curr_last_second = curr_roots_set_second->front();
     int g1_num = 1, g2_num = 1, g3_num = 1, g4_num = 1;
-    while(curr_last_first->next != nullptr) {
-        curr_last_first = curr_last_first->next;
+    while(curr_last_first->next_ != nullptr) {
+        curr_last_first = curr_last_first->next_;
         ++g1_num;
     }
-    while(curr_last_second->next != nullptr) {
-        curr_last_second = curr_last_second->next;
+    while(curr_last_second->next_ != nullptr) {
+        curr_last_second = curr_last_second->next_;
         ++g2_num;
     }
 
@@ -212,33 +214,35 @@ int main (int argc, char* argv[]) {
 
     curr_roots_set_first = roots_set_first->at(0);
     curr_roots_set_second = roots_set_first->at(1);
-    int curr_group = group_ids_first.at(curr_roots_set_first->front()->id);
-    curr_group = group_ids_first.at(curr_roots_set_second->front()->id);
+    int curr_group = group_ids_first.at(curr_roots_set_first->front()->id_);
+    curr_group = group_ids_first.at(curr_roots_set_second->front()->id_);
 
     std::cout << "Regenerating first subsubtree..." << std::endl;
     stopwatch.start();
-    tree_manager.linkTrees(curr_roots_set_first);
-    tree_manager.regenerateTree(curr_roots_set_first->front(),group_ids_first);
+    tree_manager.regenerateTree(curr_roots_set_first,group_ids_first);
+    //tree_manager.linkTrees(curr_roots_set_first);
+    //tree_manager.regenerateTree(curr_roots_set_first->front(),group_ids_first);
     elapsed_time = stopwatch.stop();
     total_time = total_time + elapsed_time;
     std::cout << "DONE in " << elapsed_time << " seconds" << std::endl << std::endl;
 
     std::cout << "Regenerating second subsubtree..." << std::endl;
     stopwatch.start();
-    tree_manager.linkTrees(curr_roots_set_second);
-    tree_manager.regenerateTree(curr_roots_set_second->front(),group_ids_first);
+    tree_manager.regenerateTree(curr_roots_set_second,group_ids_first);
+    //tree_manager.linkTrees(curr_roots_set_second);
+    //tree_manager.regenerateTree(curr_roots_set_second->front(),group_ids_first);
     elapsed_time = stopwatch.stop();
     total_time = total_time + elapsed_time;
     std::cout << "DONE in " << elapsed_time << " seconds" << std::endl << std::endl;
 
     curr_last_first = curr_roots_set_first->front();
     curr_last_second = curr_roots_set_second->front();
-    while(curr_last_first->next != nullptr) {
-        curr_last_first = curr_last_first->next;
+    while(curr_last_first->next_ != nullptr) {
+        curr_last_first = curr_last_first->next_;
         ++g1_num;
     }
-    while(curr_last_second->next != nullptr) {
-        curr_last_second = curr_last_second->next;
+    while(curr_last_second->next_ != nullptr) {
+        curr_last_second = curr_last_second->next_;
         ++g2_num;
     }
 
@@ -287,28 +291,30 @@ int main (int argc, char* argv[]) {
 
     std::cout << "Regenerating third subsubtree..." << std::endl;
     stopwatch.start();
-    tree_manager.linkTrees(curr_roots_set_first);
-    tree_manager.regenerateTree(curr_roots_set_first->front(),group_ids_second);
+    tree_manager.regenerateTree(curr_roots_set_first,group_ids_second);
+    //tree_manager.linkTrees(curr_roots_set_first);
+    //tree_manager.regenerateTree(curr_roots_set_first->front(),group_ids_second);
     elapsed_time = stopwatch.stop();
     total_time = total_time + elapsed_time;
     std::cout << "DONE in " << elapsed_time << " seconds" << std::endl << std::endl;
 
     std::cout << "Regenerating fourth subsubtre..." << std::endl;
     stopwatch.start();
-    tree_manager.linkTrees(curr_roots_set_second);
-    tree_manager.regenerateTree(curr_roots_set_second->front(),group_ids_second);
+    tree_manager.regenerateTree(curr_roots_set_second,group_ids_second);
+    //tree_manager.linkTrees(curr_roots_set_second);
+    //tree_manager.regenerateTree(curr_roots_set_second->front(),group_ids_second);
     elapsed_time = stopwatch.stop();
     total_time = total_time + elapsed_time;
     std::cout << "DONE in " << elapsed_time << " seconds" << std::endl << std::endl;
 
     curr_last_first = curr_roots_set_first->front();
     curr_last_second = curr_roots_set_second->front();
-    while(curr_last_first->next != nullptr) {
-        curr_last_first = curr_last_first->next;
+    while(curr_last_first->next_ != nullptr) {
+        curr_last_first = curr_last_first->next_;
         ++g3_num;
     }
-    while(curr_last_second->next != nullptr) {
-        curr_last_second = curr_last_second->next;
+    while(curr_last_second->next_ != nullptr) {
+        curr_last_second = curr_last_second->next_;
         ++g4_num;
     }
 

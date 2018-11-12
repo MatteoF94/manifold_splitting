@@ -6,42 +6,53 @@
 #define MANIFOLD_SPLITTING_MULTITREEMANAGER_H
 
 #include <types.h>
+#include "MTVisualizer.h"
+
+class MTSerialCreator;
+class MTParallelCreator;
 
 class MultiTreeManager {
 public:
-    struct CreationMode {
-        enum Type {
-            LTR, RTL, BALANCED, HYPER_FLIP, THIN, DF
-        };
+    enum class ChainingType {LTR,RTL,BALANCED,FLIP,DF};
+    enum class CreationType {SERIAL,PARALLEL};
 
-        Type t_;
+    MultiTreeManager();
+    ~MultiTreeManager();
 
-        CreationMode(Type t) : t_(t) {}
+    void setCreationType(CreationType type);
+    void configCreation(ChainingType chaining);
+    void configCreation(ChainingType body_chaining, ChainingType tree_chaining);
 
-        operator Type() const { return t_; }
+    /*---- Creation methods ----*/
+    MultiTreeNode *meshToTree(Mesh mesh);
+    void trimTree(MultiTreeNode *root);
 
-    private:
-        template<typename T>
-        operator T() const;
-    };
+    /*---- Recursive tree methods ----*/
+    void regenerateTree(std::vector<MultiTreeNode*>* tree_roots, std::vector<int> group_ids);
 
-    MultiTreeNode *meshToTree(Mesh mesh, CreationMode mode, int max_depth = 100);
-
+    /*---- Utility methods ----*/
     void addAreasToTree(MultiTreeNode *root, std::map<boost::graph_traits<Mesh>::face_descriptor, double> areas);
+    void addBordersToTree(MultiTreeNode *root);
 
-    void regenerateTree(MultiTreeNode *root, std::vector<int> group_ids);
-
-    void linkTrees(std::vector<MultiTreeNode*>* tree_roots);
+    /*---- Visualisation methods ----*/
+    void visualizeMultiTree(MultiTreeNode *root, std::map<boost::graph_traits<Mesh>::face_descriptor,Point> centroids);
+    void compareMultiTrees(MultiTreeNode *root_a,MultiTreeNode *root_b, std::map<boost::graph_traits<Mesh>::face_descriptor,Point> centroids);
 
 private:
-    MultiTreeNode *meshToTreeNormal(Mesh mesh, CreationMode mode, int max_depth);
+    /*---- Recursive tree methods ----*/
+    void linkTrees(std::vector<MultiTreeNode*>* tree_roots);
+    void regenerateTree(MultiTreeNode *root, std::vector<int> group_ids);
 
-    MultiTreeNode *meshToTreeDF(Mesh mesh, int max_depth, int mode);
+    MultiTreeNode *meshToTreeNormal(Mesh mesh, ChainingType chaining_type, int max_depth);
 
-    MultiTreeNode *meshToTreeThin(Mesh mesh, CreationMode mode);
+    /*---- Configuration variables ----*/
+    ChainingType chaining_type_;
+    CreationType creation_type_;
 
-    bool isAncestorOf(MultiTreeNode *candidate_anc, MultiTreeNode *candidate_des);
-
+    /*---- Delegation variables ----*/
+    MTVisualizer* visualizer_;
+    MTSerialCreator* serial_creator_;
+    MTParallelCreator* parallel_creator_;
 };
 
 #endif //MANIFOLD_SPLITTING_MULTITREEMANAGER_H

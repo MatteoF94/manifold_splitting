@@ -10,16 +10,31 @@
 
 class MTSerialCreator {
 public:
-    MTSerialCreator() {}
+    MTSerialCreator(MultiTreeManager *mt_manager) : chaining_type_(MultiTreeManager::ChainingType::LTR){
+        tree_manager_ = mt_manager;
+    }
 
-    MultiTreeNode* createSerialTree(FiniteDual dual, MultiTreeManager::CreationMode::Type creation_mode, int max_depth);
-    void setCreationMode(MultiTreeManager::CreationMode creation_mode);
+    void configCreation(MultiTreeManager::ChainingType chaining) {
+        chaining_type_ = chaining;
+    }
+
+    MultiTreeNode* createSerialTree(FiniteDual dual);
 
 private:
-    MultiTreeNode* createSerialTreeLTR(FiniteDual dual, int max_depth);
-    MultiTreeNode* createSerialTreeRTL(FiniteDual dual, int max_depth);
-    MultiTreeNode* createSerialTreeBAL(FiniteDual dual, int max_depth);
-    MultiTreeNode* createSerialTreeHF(FiniteDual dual, int max_depth);
+    MultiTreeNode* createSerialTreeLTR(FiniteDual dual);
+    MultiTreeNode* createSerialTreeRTL(FiniteDual dual);
+    MultiTreeNode* createSerialTreeBAL(FiniteDual dual);
+    MultiTreeNode* createSerialTreeFLIP(FiniteDual dual);
+    MultiTreeNode* createSerialTreeDF(FiniteDual dual);
+
+    void trimSerialTree(MultiTreeNode* root);
+    void adjustDescendants(MultiTreeNode* node);
+    bool isChain(MultiTreeNode* node);
+
+    /*---- Configuration variables ----*/
+    MultiTreeManager::ChainingType chaining_type_;
+
+    MultiTreeManager* tree_manager_;
 };
 
 

@@ -42,29 +42,29 @@ std::vector<int> MultiTreePartitioner::partitionByNumber(MultiTreeNode *last, Mu
         }
 
         // Skip the node if it is invalid (already cut)
-        if (!curr_node->valid) {
-            curr_node = curr_node->prev;
+        if (!curr_node->valid_) {
+            curr_node = curr_node->prev_;
             continue;
         }
 
         // Check for relatives, but only above a certain value
-        if (curr_node->value >= double(mThreshold) * 0.33) {
-            if(!curr_node->relatives.empty()) {
+        if (curr_node->value_ >= double(mThreshold) * 0.33) {
+            if(!curr_node->descendants_.empty()) {
                 // If the search has been successful, a partition has been found and we can skip to the next item
                 if (checkRelatives(curr_node, group_ids) == MultiTreePartitioner::CUT) {
-                    curr_node = curr_node->prev;
+                    curr_node = curr_node->prev_;
                     continue;
                 }
             }
         }
 
         // Check if the future value of the parent will exceed the admissible threshold and cut preemptively
-        if (curr_node->prev != nullptr) {
+        if (curr_node->prev_ != nullptr) {
 
             // Check if the nodes are former siblings
-            if (curr_node->prev->parent == curr_node->parent) {
-                if (curr_node->prev->value + curr_node->value > mThreshold * (1.0 + double(mEpsilon) / 100.0)) {
-                    MultiTreeNode *max = curr_node->value > curr_node->prev->value ? curr_node : curr_node->prev;
+            if (curr_node->prev_->parent_ == curr_node->parent_) {
+                if (curr_node->prev_->value_ + curr_node->value_ > mThreshold * (1.0 + double(mEpsilon) / 100.0)) {
+                    MultiTreeNode *max = curr_node->value_ > curr_node->prev_->value_ ? curr_node : curr_node->prev_;
                     cutTree(max, group_ids);
                     std::vector<MultiTreeNode*>* curr_cut = new std::vector<MultiTreeNode*>();
                     curr_cut->push_back(max);
@@ -72,23 +72,23 @@ std::vector<int> MultiTreePartitioner::partitionByNumber(MultiTreeNode *last, Mu
                     mNumGroups++;
 
                     if(max != curr_node)
-                        curr_node->parent->value = curr_node->parent->value + curr_node->value;
+                        curr_node->parent_->value_ = curr_node->parent_->value_ + curr_node->value_;
 
-                    curr_node = curr_node->prev;
+                    curr_node = curr_node->prev_;
 
                     continue;
                 }
             }
         }
 
-        if(curr_node->parent->parent == nullptr) {
-            if (curr_node->parent->mid == curr_node) {
-                if (curr_node->prev != nullptr && curr_node->prev->prev != nullptr) {
+        if(curr_node->parent_->parent_ == nullptr) {
+            if (curr_node->parent_->mid_ == curr_node) {
+                if (curr_node->prev_ != nullptr && curr_node->prev_->prev_ != nullptr) {
 
-                    if (curr_node->prev->prev->value + curr_node->prev->value + curr_node->value >
+                    if (curr_node->prev_->prev_->value_ + curr_node->prev_->value_ + curr_node->value_ >
                         mThreshold * (1.0 + double(mEpsilon) / 100.0)) {
-                        MultiTreeNode *max = curr_node->value > curr_node->prev->value ? curr_node : curr_node->prev;
-                        max = max->value > curr_node->prev->prev->value ? max : curr_node->prev->prev;
+                        MultiTreeNode *max = curr_node->value_ > curr_node->prev_->value_ ? curr_node : curr_node->prev_;
+                        max = max->value_ > curr_node->prev_->prev_->value_ ? max : curr_node->prev_->prev_;
 
                         cutTree(max, group_ids);
                         std::vector<MultiTreeNode*> *curr_cut = new std::vector<MultiTreeNode*>();
@@ -97,9 +97,9 @@ std::vector<int> MultiTreePartitioner::partitionByNumber(MultiTreeNode *last, Mu
                         mNumGroups++;
 
                         if (max != curr_node)
-                            curr_node->parent->value = curr_node->parent->value + curr_node->value;
+                            curr_node->parent_->value_ = curr_node->parent_->value_ + curr_node->value_;
 
-                        curr_node = curr_node->prev;
+                        curr_node = curr_node->prev_;
 
                         continue;
                     }
@@ -109,7 +109,7 @@ std::vector<int> MultiTreePartitioner::partitionByNumber(MultiTreeNode *last, Mu
 
 
         // If the current node is the root or exceeds the threshold, then cut
-        if (curr_node->value >= mThreshold) {
+        if (curr_node->value_ >= mThreshold) {
             cutTree(curr_node, group_ids);
             std::vector<MultiTreeNode*>* curr_cut = new std::vector<MultiTreeNode*>();
             curr_cut->push_back(curr_node);
@@ -118,11 +118,11 @@ std::vector<int> MultiTreePartitioner::partitionByNumber(MultiTreeNode *last, Mu
                 mNumGroups++;
             }
         } else {
-            curr_node->parent->value = curr_node->parent->value + curr_node->value;
-            curr_node->propagated = true;
+            curr_node->parent_->value_ = curr_node->parent_->value_ + curr_node->value_;
+            curr_node->propagated_ = true;
         }
 
-        curr_node = curr_node->prev;
+        curr_node = curr_node->prev_;
     }
 
     return *group_ids;
@@ -144,33 +144,33 @@ std::vector<int> MultiTreePartitioner::partitionThinByNumber(MultiTreeNode *last
         }
 
         // Skip the node if it is invalid (already cut)
-        if (!curr_node->valid) {
-            curr_node = curr_node->prev;
+        if (!curr_node->valid_) {
+            curr_node = curr_node->prev_;
             continue;
         }
 
         // Check for relatives, but only above a certain value
-        if (curr_node->value >= double(mThreshold) * 0.5) {
+        if (curr_node->value_ >= double(mThreshold) * 0.5) {
 
             // If the search has been successful, a partition has been found and we can skip to the next item
             if (checkRelativesThin(curr_node,lane_map,group_ids) == MultiTreePartitioner::CUT) {
-                curr_node = curr_node->prev;
+                curr_node = curr_node->prev_;
                 continue;
             }
         }
 
         // If the current node is the root or exceeds the threshold, then cut
-        if (curr_node->value >= mThreshold) {
+        if (curr_node->value_ >= mThreshold) {
             cutTree(curr_node, group_ids);
             if (mNumGroups < mNumPartitions - 1) {
                 mNumGroups++;
             }
         } else {
-            curr_node->parent->value = curr_node->parent->value + curr_node->value;
-            curr_node->propagated = true;
+            curr_node->parent_->value_ = curr_node->parent_->value_ + curr_node->value_;
+            curr_node->propagated_ = true;
         }
 
-        curr_node = curr_node->prev;
+        curr_node = curr_node->prev_;
     }
 
     return *group_ids;
@@ -186,35 +186,35 @@ std::vector<int> MultiTreePartitioner::freePartitioning(MultiTreeNode *last, Mul
     while (curr_node != nullptr) {
 
         // Skip the node if it is invalid (already cut)
-        if (!curr_node->valid) {
-            curr_node = curr_node->prev;
+        if (!curr_node->valid_) {
+            curr_node = curr_node->prev_;
             continue;
         }
 
         // Check for relatives, but only above a certain value
-        if (curr_node->value >= double(mThreshold) * 0.4) {
+        if (curr_node->value_ >= double(mThreshold) * 0.4) {
 
             // If the search has been successful, a partition has been found and we can skip to the next item
             if (checkRelatives(curr_node, group_ids) == MultiTreePartitioner::CUT) {
-                curr_node = curr_node->prev;
+                curr_node = curr_node->prev_;
                 continue;
             }
         }
 
         // Check if the future value of the parent will exceed the admissible threshold and cut preemptively
-        if (curr_node->prev != nullptr) {
+        if (curr_node->prev_ != nullptr) {
 
             // Check if the nodes are former siblings
-            if (curr_node->prev->parent == curr_node->parent) {
-                if (curr_node->prev->value + curr_node->value > mThreshold * (1.0 + double(mEpsilon) / 100.0)) {
-                    MultiTreeNode *max = curr_node->value > curr_node->prev->value ? curr_node : curr_node->prev;
+            if (curr_node->prev_->parent_ == curr_node->parent_) {
+                if (curr_node->prev_->value_ + curr_node->value_ > mThreshold * (1.0 + double(mEpsilon) / 100.0)) {
+                    MultiTreeNode *max = curr_node->value_ > curr_node->prev_->value_ ? curr_node : curr_node->prev_;
                     cutTree(max, group_ids);
                     mNumGroups++;
 
                     if(max != curr_node)
-                        curr_node->parent->value = curr_node->parent->value + curr_node->value;
+                        curr_node->parent_->value_ = curr_node->parent_->value_ + curr_node->value_;
 
-                    curr_node = curr_node->prev;
+                    curr_node = curr_node->prev_;
 
                     continue;
                 }
@@ -222,15 +222,15 @@ std::vector<int> MultiTreePartitioner::freePartitioning(MultiTreeNode *last, Mul
         }
 
         // If the current node is the root or exceeds the threshold, then cut
-        if (curr_node->value >= mThreshold) {
+        if (curr_node->value_ >= mThreshold) {
             cutTree(curr_node, group_ids);
             mNumGroups++;
         } else {
-            curr_node->parent->value = curr_node->parent->value + curr_node->value;
-            curr_node->propagated = true;
+            curr_node->parent_->value_ = curr_node->parent_->value_ + curr_node->value_;
+            curr_node->propagated_ = true;
         }
 
-        curr_node = curr_node->prev;
+        curr_node = curr_node->prev_;
     }
 
     return *group_ids;
@@ -241,11 +241,11 @@ MultiTreePartitioner::LinkageState MultiTreePartitioner::checkRelatives(MultiTre
     std::vector<MultiTreeNode*> nodes_to_cut;
     nodes_to_cut.push_back(node);
 
-    int sum = node->value;
+    int sum = node->value_;
     while (nodes_to_cut.size() < mDepth ) {
         MultiTreeNode* curr_node = nodes_to_cut.back();
 
-        for (auto &relative : curr_node->relatives) {
+        for (auto &relative : curr_node->descendants_) {
             MultiTreePartitioner::LinkageState state = checkRelatives(relative,&nodes_to_cut, sum, groups);
             if(state == MultiTreePartitioner::CUT)
                 return MultiTreePartitioner::CUT;
@@ -258,7 +258,7 @@ MultiTreePartitioner::LinkageState MultiTreePartitioner::checkRelatives(MultiTre
 
 MultiTreePartitioner::LinkageState MultiTreePartitioner::checkRelatives(MultiTreeNode* node, std::vector<MultiTreeNode*>* stack, int sum, std::vector<int>* groups) {
     stack->push_back(node);
-    sum = sum + node->value;
+    sum = sum + node->value_;
     if (sum >= mThreshold && sum <= mThreshold*(1.0 + double(mEpsilon)/100.0)) {
         std::vector<MultiTreeNode*>* curr_cut = new std::vector<MultiTreeNode*>();
         for (auto &i : *stack) {
@@ -274,7 +274,7 @@ MultiTreePartitioner::LinkageState MultiTreePartitioner::checkRelatives(MultiTre
     }
 
     while(stack->size() < mDepth) {
-        for (auto &relative : node->relatives) {
+        for (auto &relative : node->descendants_) {
             if(!isRelativeLinked(relative,stack)) {
                 MultiTreePartitioner::LinkageState state = checkRelatives(relative,stack,sum,groups);
                 if(state == MultiTreePartitioner::CUT)
@@ -290,49 +290,49 @@ MultiTreePartitioner::LinkageState MultiTreePartitioner::checkRelatives(MultiTre
 
 MultiTreePartitioner::LinkageState MultiTreePartitioner::checkDescendantsFull(MultiTreeNode *node, std::vector<int> *groups){
     BNode* root = new BNode;
-    root->id = node->id;
+    root->id = node->id_;
     std::vector<MultiTreeNode*>* ids = new std::vector<MultiTreeNode*>;
     ids->push_back(node);
     createMiniTree(root,node,ids,1);
 
     std::vector<BNode*>* trees = new std::vector<BNode*>;
     BNode* root_copy = new BNode;
-    root_copy->id = node->id;
+    root_copy->id = node->id_;
     trees->push_back(root_copy);
 
     createTreePowerSet(root);
 }
 
 void MultiTreePartitioner::createMiniTree(MultiTreePartitioner::BNode* mini_node, MultiTreeNode* node, std::vector<MultiTreeNode*>* ids, int curr_depth){
-    if(node->relatives.empty() || curr_depth == 4)
+    if(node->descendants_.empty() || curr_depth == 4)
         return;
 
-    if(node->relatives.size() == 1) {
-        if(!isRelativeLinked(node->relatives.at(0),ids)) {
+    if(node->descendants_.size() == 1) {
+        if(!isRelativeLinked(node->descendants_.at(0),ids)) {
             BNode *new_mini_node = new BNode;
-            new_mini_node->id = node->relatives.at(0)->id;
+            new_mini_node->id = node->descendants_.at(0)->id_;
             mini_node->left = new_mini_node;
 
-            ids->push_back(node->relatives.at(0));
-            createMiniTree(new_mini_node, node->relatives.at(0), ids, curr_depth + 1);
+            ids->push_back(node->descendants_.at(0));
+            createMiniTree(new_mini_node, node->descendants_.at(0), ids, curr_depth + 1);
         }
     } else {
-        if(!isRelativeLinked(node->relatives.at(0),ids)) {
+        if(!isRelativeLinked(node->descendants_.at(0),ids)) {
             BNode *new_mini_node_L = new BNode;
-            new_mini_node_L->id = node->relatives.at(0)->id;
+            new_mini_node_L->id = node->descendants_.at(0)->id_;
             mini_node->left = new_mini_node_L;
 
-            ids->push_back(node->relatives.at(0));
-            createMiniTree(new_mini_node_L, node->relatives.at(0), ids, curr_depth + 1);
+            ids->push_back(node->descendants_.at(0));
+            createMiniTree(new_mini_node_L, node->descendants_.at(0), ids, curr_depth + 1);
         }
 
-        if(!isRelativeLinked(node->relatives.at(1),ids)) {
+        if(!isRelativeLinked(node->descendants_.at(1),ids)) {
             BNode *new_mini_node_R = new BNode;
-            new_mini_node_R->id = node->relatives.at(1)->id;
+            new_mini_node_R->id = node->descendants_.at(1)->id_;
             mini_node->right = new_mini_node_R;
 
-            ids->push_back(node->relatives.at(1));
-            createMiniTree(new_mini_node_R, node->relatives.at(1), ids, curr_depth + 1);
+            ids->push_back(node->descendants_.at(1));
+            createMiniTree(new_mini_node_R, node->descendants_.at(1), ids, curr_depth + 1);
         }
     }
 
@@ -425,12 +425,12 @@ std::vector<std::vector<int>> MultiTreePartitioner::searchSubTreeCombinations(BN
 
 MultiTreePartitioner::LinkageState MultiTreePartitioner::checkRelativesThin(MultiTreeNode* node,std::unordered_map<boost::graph_traits<Mesh>::face_descriptor, int> lane_map, std::vector<int>* groups) {
 
-    int lane_first_chain = lane_map[node->id];
-    int sum = node->value;
+    int lane_first_chain = lane_map[node->id_];
+    int sum = node->value_;
 
     //Check for 3-chains
-    for (auto &relative_first : node->relatives) {
-        sum = sum + relative_first->value;
+    for (auto &relative_first : node->descendants_) {
+        sum = sum + relative_first->value_;
 
         if (sum >= mThreshold && sum <= mThreshold*(1.0 + double(mEpsilon)/100.0)) {
             propagateValueCut(relative_first);
@@ -441,10 +441,10 @@ MultiTreePartitioner::LinkageState MultiTreePartitioner::checkRelativesThin(Mult
             return MultiTreePartitioner::CUT; // tree has been cut
 
         } else {
-            for (auto &relative_second: relative_first->relatives) {
+            for (auto &relative_second: relative_first->descendants_) {
 
-                if(lane_map[relative_second->id] != lane_first_chain) {
-                    sum = sum + relative_second->value;
+                if(lane_map[relative_second->id_] != lane_first_chain) {
+                    sum = sum + relative_second->value_;
 
                     if (sum >= mThreshold && sum <= mThreshold * (1.0 + double(mEpsilon) / 100.0)) {
                         propagateValueCut(relative_first);
@@ -457,20 +457,20 @@ MultiTreePartitioner::LinkageState MultiTreePartitioner::checkRelativesThin(Mult
                         return MultiTreePartitioner::CUT; // tree has been cut
 
                     } else
-                        sum = sum - relative_second->value;
+                        sum = sum - relative_second->value_;
                 }
             }
 
-            sum = sum - relative_first->value;
+            sum = sum - relative_first->value_;
         }
     }
 
-    if(node->relatives.size() == 2) {
-        MultiTreeNode* first = node->relatives.at(0);
-        MultiTreeNode* second = node->relatives.at(1);
+    if(node->descendants_.size() == 2) {
+        MultiTreeNode* first = node->descendants_.at(0);
+        MultiTreeNode* second = node->descendants_.at(1);
 
-        if(lane_map[first->id] != lane_map[second->id]) {
-            sum = sum + first->value + second->value;
+        if(lane_map[first->id_] != lane_map[second->id_]) {
+            sum = sum + first->value_ + second->value_;
             if (sum >= mThreshold && sum <= mThreshold*(1.0 + double(mEpsilon)/100.0)) {
                 propagateValueCut(first);
                 propagateValueCut(second);
@@ -496,10 +496,10 @@ bool MultiTreePartitioner::isRelativeLinked(MultiTreeNode *node, std::vector<Mul
         if(alt_node == curr_ancestor)
             return true;
 
-        while(alt_node->level >= curr_ancestor->level) {
-            if(alt_node->parent == curr_ancestor)
+        while(alt_node->level_ >= curr_ancestor->level_) {
+            if(alt_node->parent_ == curr_ancestor)
                 return true;
-            alt_node = alt_node->parent;
+            alt_node = alt_node->parent_;
         }
     }
 
@@ -507,12 +507,12 @@ bool MultiTreePartitioner::isRelativeLinked(MultiTreeNode *node, std::vector<Mul
 }
 
 void MultiTreePartitioner::propagateValueCut(MultiTreeNode* node) {
-    int value = node->value;
+    int value = node->value_;
     MultiTreeNode* sub_root = node;
 
-    while(sub_root->propagated) {
-        sub_root->parent->value = sub_root->parent->value - value;
-        sub_root = sub_root->parent;
+    while(sub_root->propagated_) {
+        sub_root->parent_->value_ = sub_root->parent_->value_ - value;
+        sub_root = sub_root->parent_;
     }
 }
 
@@ -520,46 +520,46 @@ void MultiTreePartitioner::cutTree (MultiTreeNode* sub_root, std::vector<int>* g
     if (sub_root == nullptr)
         return;
 
-    if(sub_root->valid) {
-        sub_root->valid = false;
-        group_list->at(sub_root->id) = mNumGroups;
+    if(sub_root->valid_) {
+        sub_root->valid_ = false;
+        group_list->at(sub_root->id_) = mNumGroups;
         //mFaceGroupId->insert({sub_root->id,mNumGroups});
-        cutTree(sub_root->left,group_list);
-        cutTree(sub_root->right,group_list);
-        if(sub_root->parent == nullptr)
-            cutTree(sub_root->mid,group_list);
+        cutTree(sub_root->left_,group_list);
+        cutTree(sub_root->right_,group_list);
+        if(sub_root->parent_ == nullptr)
+            cutTree(sub_root->mid_,group_list);
     }
 }
 
 std::unordered_map<boost::graph_traits<Mesh>::face_descriptor, int> MultiTreePartitioner::createLanesMap(MultiTreeNode* root) {
 
     std::unordered_map<boost::graph_traits<Mesh>::face_descriptor, int> lane_map;
-    lane_map.insert({root->id,0});
+    lane_map.insert({root->id_,0});
 
-    if(root->left != nullptr) {
-        MultiTreeNode* left_child = root->left;
+    if(root->left_ != nullptr) {
+        MultiTreeNode* left_child = root->left_;
 
         while(left_child != nullptr) {
-            lane_map.insert({left_child->id,1});
-            left_child = left_child->left;
+            lane_map.insert({left_child->id_,1});
+            left_child = left_child->left_;
         }
     }
 
-    if(root->right != nullptr) {
-        MultiTreeNode* right_child = root->right;
+    if(root->right_ != nullptr) {
+        MultiTreeNode* right_child = root->right_;
 
         while(right_child != nullptr) {
-            lane_map.insert({right_child->id,2});
-            right_child = right_child->left;
+            lane_map.insert({right_child->id_,2});
+            right_child = right_child->left_;
         }
     }
 
-    if(root->mid != nullptr) {
-        MultiTreeNode* mid_child = root->mid;
+    if(root->mid_ != nullptr) {
+        MultiTreeNode* mid_child = root->mid_;
 
         while(mid_child != nullptr) {
-            lane_map.insert({mid_child->id,3});
-            mid_child = mid_child->left;
+            lane_map.insert({mid_child->id_,3});
+            mid_child = mid_child->left_;
         }
     }
 

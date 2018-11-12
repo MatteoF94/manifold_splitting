@@ -64,8 +64,8 @@ int main (int argc, char* argv[]) {
 
     MultiTreeNode* last = root;
     int num_nodes = input_manager.getNumFaces();
-    while (last->next != nullptr) {
-        last = last->next;
+    while (last->next_ != nullptr) {
+        last = last->next_;
     }
 
     int K = 8;

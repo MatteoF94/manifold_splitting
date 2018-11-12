@@ -36,26 +36,28 @@ typedef boost::filtered_graph<Dual,noborder<Mesh>> FiniteDual;
 typedef boost::adjacency_list<boost::setS,boost::vecS,boost::undirectedS> Graph;
 
 struct MultiTreeNode {
-    int value;
-    double area;
-    int level;
-    bool valid;
-    bool propagated;
-    boost::graph_traits<FiniteDual>::vertex_descriptor id;
 
-    MultiTreeNode* left;
-    MultiTreeNode* right;
-    MultiTreeNode* parent;
-    MultiTreeNode* next;
-    MultiTreeNode* prev;
+    boost::graph_traits<FiniteDual>::vertex_descriptor id_;
 
-    MultiTreeNode* mid; // Only for the root node...
+    int value_{1};
+    double area_{0.0};
+    int level_{0};
+    bool valid_{true};
+    bool propagated_{false};
+    bool is_border_{false};
 
-    std::vector<MultiTreeNode*> relatives;  // TODO use multi dim vector
+    MultiTreeNode* parent_ = nullptr;
+    MultiTreeNode* left_ = nullptr;
+    MultiTreeNode* mid_ = nullptr;
+    MultiTreeNode* right_ = nullptr;
 
-    MultiTreeNode() : value(1), area(0.0), level(0), valid(true), propagated(false), left(nullptr), right(nullptr), mid(nullptr), parent(nullptr), next(nullptr), prev(nullptr) {
+    MultiTreeNode* next_ = nullptr;
+    MultiTreeNode* prev_ = nullptr;
 
-    }
+    std::vector<MultiTreeNode*> descendants_;
+    std::vector<MultiTreeNode*> relatives_;
+
+    MultiTreeNode() {}
 };
 
 #endif //MANIFOLD_SPLITTING_TYPES_H

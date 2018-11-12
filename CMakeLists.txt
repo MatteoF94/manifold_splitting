@@ -9,6 +9,8 @@ find_package(Eigen3 REQUIRED)
 find_package(CGAL REQUIRED)
 find_package(GMP REQUIRED)
 find_package(OpenCV REQUIRED)
+find_package(OpenGL REQUIRED)
+find_package(glfw3 REQUIRED)
 
 find_package(MPI REQUIRED)
 find_package(OpenMP REQUIRED)
@@ -22,8 +24,8 @@ include_directories(
         ${Boost_INCLUDE_DIRS}
         ${MPI_INCLUDE_PATH}
         ${OpenMP_INCLUDE_PATH}
+        ${OPENGL_INCLUDE_DIRS}
 )
-
 
 add_subdirectory(test)
 

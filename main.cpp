@@ -181,8 +181,8 @@ int main() {
     MultiTreeNode* last = root3;
     int num_nodes = miao.getNumFaces();
     int i = 1;
-    while (last->next != nullptr) {
-        last = last->next;
+    while (last->next_ != nullptr) {
+        last = last->next_;
         i++;
     }
 
