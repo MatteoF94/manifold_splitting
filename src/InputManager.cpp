@@ -14,6 +14,7 @@
 
 #include <CGAL/Polygon_mesh_processing/connected_components.h>
 #include <CGAL/Polygon_mesh_processing/stitch_borders.h>
+#include <CGAL/Polygon_mesh_processing/orientation.h>
 
 #include <boost/graph/connected_components.hpp>
 #include <boost/foreach.hpp>
@@ -61,12 +62,17 @@ Mesh InputManager::readMeshFromOff(const std::string filename) {
 
     inputMesh = mesh;
     infile.close();
-    CGAL::Polygon_mesh_processing::stitch_borders(mesh);
+    //CGAL::Polygon_mesh_processing::stitch_borders(mesh);
     std::cout << "Loaded MESH properties: " << std::endl;
     std::cout << "- " << mesh.num_vertices() << " vertices" << std::endl;
     std::cout << "- " << mesh.num_faces() << " faces" << std::endl;
     std::cout << "- " << mesh.num_edges() << " edges" << std::endl;
 
+    /*if(CGAL::Polygon_mesh_processing::is_outward_oriented(mesh)) {
+        std::cout << "- " << "is outward oriented (counterclockwise sequence of vertices)" << std::endl;
+    } else {
+        std::cout << "- " << "is not outward oriented (counterclockwise sequence of vertices)" << std::endl;
+    }*/
 
     typename Mesh::Property_map<Mesh::Face_index, CGAL::Color> fcolors;
     bool has_fcolors;

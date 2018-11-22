@@ -58,7 +58,13 @@ add_executable(MultiTreePartitionerTest
         ../src/MTVisualizer.cpp
         ../src/MTParallelCreator.cpp
         ../include/MTParallelCreator.h
-        )
+        ../src/RegularGraphsGen.cpp
+        ../src/core/multitree/Concatenator.cpp
+        ../src/core/multitree/AdoptionHandler.cpp
+        ../src/core/multitree/SerialCreator.cpp
+        ../src/core/multitree/SerialCreator.h
+        ../src/core/multitree/Creator.cpp
+        ../src/core/multitree/Creator.h ../src/core/multitree/CreatorManager.cpp ../src/core/multitree/CreatorManager.h ../src/core/multitree/TreeTypes.h ../src/core/multitree/ParallelCreator.cpp ../src/core/multitree/ParallelCreator.h)
 
 add_executable(MultiTreePartitionerDFTest
         MultiTreePartitionerDFTest.cpp

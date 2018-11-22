@@ -26,6 +26,7 @@ public:
     }
 
     MultiTreeNode* createParallelTree(FiniteDual dual);
+    void chainTree(MultiTreeNode *root);
 
 private:
     void createParallelTreeBodyLTR(MultiTreeNode *front_element, FiniteDual dual, omp_lock_t insertion_lock, std::vector<bool>* inserted_map, std::vector<MultiTreeNode*>* node_real, std::vector<std::vector<DualVertexDescriptor>>* relatives_id);

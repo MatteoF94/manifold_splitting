@@ -9,6 +9,11 @@
 #include <MultiTreeManager.h>
 #include <MeshManager.h>
 #include <MTVisualizer.h>
+#include <MTSerialCreator.h>
+#include <RegularGraphsGen.h>
+#include <core/multitree/TreeTypes.h>
+#include <core/multitree/CreatorManager.h>
+#include <spdlog/spdlog.h>
 
 std::string selectMesh(int mesh_idx) {
 
@@ -40,6 +45,13 @@ std::string selectMesh(int mesh_idx) {
 
 int main (int argc, char* argv[]) {
 
+    /*RegularGraphsGen graph_gen(2097152);
+    Graph miao = graph_gen.createKRegGraph(16);
+    graph_gen.writeGraphMetis(miao,"../../data/regular.graph");
+    exit(0);*/
+
+    spdlog::info("Welcome to spdlog version {}.{}.{}!",SPDLOG_VER_MAJOR,SPDLOG_VER_MINOR,SPDLOG_VER_PATCH);
+    spdlog::set_level(spdlog::level::debug);
     std::string selected_mesh = selectMesh(0);
     std::string input_filename = "../../data/Watermarking/" + selected_mesh + "/" + selected_mesh + ".off";
     //std::string input_filename("/home/matteo/Desktop/meshes/Castle.off");
@@ -47,6 +59,9 @@ int main (int argc, char* argv[]) {
     InputManager input_manager;
     MeshManager mesh_manager;
     MultiTreeManager tree_manager;
+    std::unique_ptr<CreatorManager> creatorManager = std::make_unique<CreatorManager>();
+    Node *roota = new Node(Mesh::face_index(0));
+
     Stopwatch stopwatch;
     double elapsed_time, total_time = 0;
 
@@ -56,16 +71,26 @@ int main (int argc, char* argv[]) {
     elapsed_time = stopwatch.stop();
     total_time = total_time + elapsed_time;
     std::cout << "DONE in " << elapsed_time << " seconds" << std::endl << std::endl;
-    int i = 10;
-//while(1) {
+
+    creatorManager->createMultiTree(mesh,roota);
+    int i = 0;
+    while(roota) {
+        ++i;
+        roota = roota->next_;
+    }
+    std::cout << i << std::endl;
+    return 0;
+
     std::cout << "Converting mesh to multi level tree..." << std::endl;
-    tree_manager.setCreationType(MultiTreeManager::CreationType::PARALLEL);
-    tree_manager.configCreation(MultiTreeManager::ChainingType::BALANCED,MultiTreeManager::ChainingType::BALANCED);
+    tree_manager.setCreationModes(MultiTreeManager::CreationType::SERIAL,true);
+    tree_manager.configAdoption(2,10,true,true);
+    tree_manager.configCreation(MultiTreeManager::ChainingType::LTR);
+    tree_manager.configCreation(MultiTreeManager::ChainingType::LTR,MultiTreeManager::ChainingType::LTR);
     stopwatch.start();
     MultiTreeNode *root = tree_manager.meshToTree(mesh);
     elapsed_time = stopwatch.stop();
     total_time = total_time + elapsed_time;
-    std::cout << "DONE in " << elapsed_time << " seconds" << std::endl ;//<< std::endl;
+    std::cout << "DONE in " << elapsed_time << " seconds" << std::endl << std::endl;
 
     MTVisualizer visualizer;
     //visualizer.visualizeMesh(root,mesh);
@@ -91,18 +116,25 @@ int main (int argc, char* argv[]) {
     int num_nodes = input_manager.getNumFaces();
 
     //exit(0);
+            int col = 0;
     while (last->next_ != nullptr) {
         last = last->next_;
+        col++;
     }
+    std::cout << col << std::endl;
 
     int K = 8;
     int thresh = num_nodes / K;
     MultiTreePartitioner partitioner;
-    partitioner.configParameters(10,thresh,20,K);
+    partitioner.configParameters(10,thresh,40,K);
 
     std::cout << "Partitioning tree..." << std::endl;
     stopwatch.start();
     std::vector<int> group_ids = partitioner.partitionByNumber(last, root, num_nodes);
+    //MTSerialCreator serialCreator(&tree_manager);
+    //Dual dual(mesh);
+    //FiniteDual finiteDual(dual, noborder<Mesh>(mesh));
+    //std::vector<int> group_ids = serialCreator.createSerialTreeDF(finiteDual, mesh);
     elapsed_time = stopwatch.stop();
     total_time = total_time + elapsed_time;
     std::cout << "DONE in " << elapsed_time << " seconds" << std::endl << std::endl;
@@ -116,9 +148,6 @@ int main (int argc, char* argv[]) {
         roots.emplace_back(rootina);
     }
 
-    visualizer.visualizeSubMeshes(roots,mesh);
-    exit(0);
-
     std::cout << "Partitioning results: " << std::endl;
     std::vector<int> num_elem(K,0);
 
@@ -127,8 +156,12 @@ int main (int argc, char* argv[]) {
             num_elem.at(group_id)++;
     }
 
+    for (int j = 0; j < K; j++)
+        std::cout << "C" << j << ": " << num_elem.at(j) << std::endl;
 
-//exit(0);
+    visualizer.visualizeSubMeshes(roots,mesh);
+    exit(0);
+
     std::string partition_filename = "../../data/Watermarking/" + selected_mesh + "/" + selected_mesh + "_mtp.txt";
     //std::string partition_filename = "../../data/castle_mtp.txt";
 
@@ -141,8 +174,6 @@ int main (int argc, char* argv[]) {
             outfile << group_id << std::endl;
     }
 
-    for (int j = 0; j < K; j++)
-        std::cout << "C" << j << ": " << num_elem.at(j) << std::endl;
  //exit(0);
     std::cout << "Breaking the mesh..." << std::endl;
     stopwatch.start();

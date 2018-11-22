@@ -1,0 +1,14 @@
+//
+// Created by matteo on 22/11/18.
+//
+
+#ifndef MANIFOLD_SPLITTING_PARALLELCREATOR_H
+#define MANIFOLD_SPLITTING_PARALLELCREATOR_H
+
+
+class ParallelCreator {
+
+};
+
+
+#endif //MANIFOLD_SPLITTING_PARALLELCREATOR_H

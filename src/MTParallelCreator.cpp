@@ -697,3 +697,23 @@ void MTParallelCreator::chainParallelTreeFLIP(MultiTreeNode *root){
         tree_queue.pop();
     }
 }
+
+void MTParallelCreator::chainTree(MultiTreeNode *root) {
+    switch(tree_chaining_type_) {
+        case MultiTreeManager::ChainingType::LTR:
+            chainParallelTreeLTR(root);
+            break;
+        case MultiTreeManager::ChainingType::RTL:
+            chainParallelTreeRTL(root);
+            break;
+        case MultiTreeManager::ChainingType::BALANCED:
+            chainParallelTreeBAL(root);
+            break;
+        case MultiTreeManager::ChainingType::FLIP:
+            chainParallelTreeFLIP(root);
+            break;
+        default:
+            std::cerr << "*ERROR* :: accepted modes for parallel chaining are LTR, RTL, BALANCED and FLIP" << std::endl;
+            exit(1);
+    }
+}

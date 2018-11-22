@@ -162,7 +162,7 @@ int main(int argc, char* argv[]) {
         showPhase1Clusters(src,phase1_clusters);
 
 
-    // Prepare the custom similarity matrix for the specific test image
+    // Prepare the custom similarity matrix for the specific examples image
     std::unordered_map<int,int> label_index_map = createLabelIndexMap();
     Eigen::MatrixXf test_similarity_matrix = createTestSimilarityMatrix();
 

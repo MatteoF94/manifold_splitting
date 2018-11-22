@@ -5,7 +5,11 @@
 #include <MTSerialCreator.h>
 #include <stack>
 #include <queue>
+#include <boost/circular_buffer.hpp>
 #include <stopwatch.h>
+#include <core/multitree/Concatenator.h>
+#include <core/multitree/AdoptionHandler.h>
+#include <core/multitree/SerialCreator.h>
 
 MultiTreeNode* MTSerialCreator::createSerialTree(FiniteDual dual){
     MultiTreeNode *root = nullptr;
@@ -24,7 +28,7 @@ MultiTreeNode* MTSerialCreator::createSerialTree(FiniteDual dual){
             root = createSerialTreeFLIP(dual);
             break;
         case MultiTreeManager::ChainingType::DF :
-            root = createSerialTreeDF(dual);
+            //root = createSerialTreeDF(dual);
             break;
     }
 
@@ -39,14 +43,14 @@ MultiTreeNode* MTSerialCreator::createSerialTreeLTR(FiniteDual dual){
 
     std::vector<MultiTreeNode*> node_real(boost::num_vertices(dual),nullptr);
 
-    MultiTreeNode* root = new MultiTreeNode;
+    MultiTreeNode *root = new MultiTreeNode;
     root->id_ = *vb;
-    node_real.at(*vb) = root;
+    node_real[*vb] = root;
 
     MultiTreeNode* cursor = root;
     MultiTreeNode* front_element = root;
 
-    while (front_element != nullptr) {
+    while (front_element) {
         boost::graph_traits<FiniteDual>::adjacency_iterator ai,ai_end;
 
         int state = 0;
@@ -73,7 +77,7 @@ MultiTreeNode* MTSerialCreator::createSerialTreeLTR(FiniteDual dual){
                         break;
                 }
 
-                node_real.at(*ai) = curr_node;
+                node_real[*ai] = curr_node;
 
                 curr_node->prev_ = cursor;
                 curr_node->prev_->next_ = curr_node;
@@ -85,6 +89,11 @@ MultiTreeNode* MTSerialCreator::createSerialTreeLTR(FiniteDual dual){
                 if (front_element->level_ - old_node->level_ >= 0) {
                     old_node->descendants_.push_back(front_element);
                     front_element->relatives_.emplace_back(old_node);
+
+                    if(std::find(old_node->relatives_.begin(),old_node->relatives_.end(),front_element) != old_node->relatives_.end()) {
+                        old_node->relatives_.erase(std::remove(old_node->relatives_.begin(),old_node->relatives_.end(),front_element),old_node->relatives_.end());
+                        front_element->descendants_.erase(std::remove(front_element->descendants_.begin(),front_element->descendants_.end(),old_node),front_element->descendants_.end());
+                    }
                 }
             }
 
@@ -92,8 +101,22 @@ MultiTreeNode* MTSerialCreator::createSerialTreeLTR(FiniteDual dual){
 
         front_element = front_element->next_;
     }
-
-    trimSerialTree(root);
+    if(tree_manager_->checkTreeIntegrity(root))
+        std::cout << "CORRECT TREE" << std::endl;
+    if(with_adoptions_) {
+        AdoptionHandler adoptionHandler;
+        //adoptionHandler.configHandler(true,true,10,2);
+        //adoptionHandler.adoptBranches(root);
+        tree_manager_->treeAdoption(root);
+        //trimSerialTree(root);
+        //trimSerialTree(root);
+        //tree_manager_->chainTree(root);
+        /*SerialCreator serialCreator;
+        serialCreator.configCreator();
+        Concatenator concatenator;
+        concatenator.setConcatenationType(ConcatenationType::Balanced);
+        concatenator.concatenateTree(root);*/
+    }
     return root;
 }
 
@@ -166,6 +189,7 @@ MultiTreeNode* MTSerialCreator::createSerialTreeRTL(FiniteDual dual){
 }
 
 MultiTreeNode* MTSerialCreator::createSerialTreeBAL(FiniteDual dual){
+    std::cout << "YO" << std::endl;
     boost::graph_traits<FiniteDual>::vertex_iterator vb,ve;
     boost::tie(vb,ve) = boost::vertices(dual);
 
@@ -339,13 +363,13 @@ MultiTreeNode* MTSerialCreator::createSerialTreeFLIP(FiniteDual dual){
     return root;
 }
 
-MultiTreeNode* MTSerialCreator::createSerialTreeDF(FiniteDual dual) {
+std::vector<int> MTSerialCreator::createSerialTreeDF(FiniteDual dual, Mesh mesh) {
 
     boost::graph_traits<FiniteDual>::vertex_iterator vb,ve;
     boost::tie(vb,ve) = boost::vertices(dual);
 
     std::vector<bool> inserted_map(boost::num_vertices(dual),false);
-    std::unordered_map<boost::graph_traits<FiniteDual>::vertex_descriptor, MultiTreeNode*> node_map;
+    /*std::unordered_map<boost::graph_traits<FiniteDual>::vertex_descriptor, MultiTreeNode*> node_map;
     std::stack<MultiTreeNode*> tree_stack;
 
     auto * root = new MultiTreeNode;
@@ -410,7 +434,126 @@ MultiTreeNode* MTSerialCreator::createSerialTreeDF(FiniteDual dual) {
         }
     }
 
-    return root;
+    return root;*/
+
+    std::stack<boost::graph_traits<Mesh>::face_descriptor> ids;
+    std::vector<boost::graph_traits<Mesh>::face_descriptor> parents(boost::num_vertices(dual),*vb);
+    ids.emplace(*vb);
+    boost::graph_traits<FiniteDual>::adjacency_iterator ai,ai_end;
+    int count = 0;
+    std::vector<int> groups(boost::num_vertices(dual),-1);
+    int curr_group = 0;
+    bool swap_direction = false;
+    groups[*vb] = curr_group;
+
+    while(!ids.empty()) {
+        boost::graph_traits<Mesh>::face_descriptor curr_index = ids.top();
+        ids.pop();
+        if(!inserted_map[curr_index]) {
+            inserted_map[curr_index] = true;
+            groups[curr_index] = curr_group;
+            ++count;
+        } else {
+            if(curr_group != groups[curr_index])
+                swap_direction = !swap_direction;
+            continue;
+        }
+
+        std::vector<boost::graph_traits<Mesh>::face_descriptor> curr_neigh;
+        //std::cout << curr_index << std::endl;
+        if(curr_index == 8)
+            int urca = 0;
+
+        boost::circular_buffer<boost::graph_traits<Mesh>::face_descriptor> neighbours(3);
+        for (boost::tie(ai,ai_end)=boost::adjacent_vertices(curr_index,dual);ai != ai_end; ++ai) {
+            neighbours.push_back(*ai);
+
+            /*std::cout << *ai << std::endl;
+            CGAL::Vertex_around_face_iterator<Mesh> vafb,vafe;
+            for(boost::tie(vafb,vafe) = CGAL::vertices_around_face(mesh.halfedge(*ai),mesh);vafb != vafe;++vafb) {
+
+                Point p = mesh.point(*vafb);
+                std::cout << p.x() << " " << p.y() << " " << p.z() << std::endl;
+            }*/
+        }
+
+        if(parents[curr_index] != curr_index) {
+            while(*neighbours.begin() != parents[curr_index]) {
+                neighbours.rotate(neighbours.begin()+1);
+            }
+        } else {
+            std::reverse(neighbours.begin(),neighbours.end());
+            boost::graph_traits<Mesh>::face_descriptor first_child = neighbours[0];
+            if(!inserted_map[first_child]) {
+                //inserted_map[first_child] = true;
+                //groups[first_child] = curr_group;
+                //++count;
+                ids.emplace(first_child);
+                parents[first_child] = curr_index;
+            }
+        }
+
+        /*std::cout << "- " << neighbours[0] << std::endl;
+        std::cout << "- " << neighbours[1] << std::endl;
+        std::cout << "- " << neighbours[2] << std::endl;*/
+
+        boost::graph_traits<Mesh>::face_descriptor cw_child;
+        if(!swap_direction)
+            cw_child = neighbours[1];
+        else
+            cw_child = neighbours[2];
+
+        if(!inserted_map[cw_child] || true) {
+            //inserted_map[cw_child] = true;
+            //groups[cw_child] = curr_group;
+            //++count;
+            ids.emplace(cw_child);
+            parents[cw_child] = curr_index;
+        }
+
+        boost::graph_traits<Mesh>::face_descriptor ccw_child;
+        if(!swap_direction)
+            ccw_child = neighbours[2];
+        else
+            ccw_child = neighbours[1];
+        if(!inserted_map[ccw_child] || true) {
+            //inserted_map[ccw_child] = true;
+            //groups[ccw_child] = curr_group;
+            //++count;
+            ids.emplace(ccw_child);
+            parents[ccw_child] = curr_index;
+        }
+
+        int miao = 0;
+        if(count > 8708) {
+            count = 0;
+            ++curr_group;
+            bool flag = false;
+
+            while(!flag && !ids.empty()) {
+                int num_children = 0;
+                boost::graph_traits<Mesh>::face_descriptor conf_ind = ids.top();
+                if(inserted_map[conf_ind]) {
+                    ids.pop();
+                    continue;
+                }
+                for (boost::tie(ai,ai_end)=boost::adjacent_vertices(conf_ind,dual);ai != ai_end; ++ai) {
+                    if (!inserted_map[*ai]) {
+                        ++num_children;
+                    }
+                }
+                if(num_children != 0) {
+                    flag = true;
+                    //std::stack<boost::graph_traits<Mesh>::face_descriptor> empty_stack;
+                    //ids.swap(empty_stack);
+                    //ids.emplace(conf_ind);
+                } else
+                    ids.pop();
+            }
+        }
+    }
+
+    return groups;
 }
 
 void MTSerialCreator::trimSerialTree(MultiTreeNode *root) {
@@ -442,7 +585,7 @@ void MTSerialCreator::trimSerialTree(MultiTreeNode *root) {
         depth_stack.pop();
 
         if(children_count == 1 && curr_node->descendants_.size() == 1) {
-            if(!isChain(curr_node)) {
+            if(!tree_manager_->isChannel(curr_node)) {
                 for(auto &elem : curr_push)
                     depth_stack.push(elem);
             } else {
@@ -460,6 +603,8 @@ void MTSerialCreator::trimSerialTree(MultiTreeNode *root) {
                     relative->relatives_.clear();
                     std::cout << "Curr node: " << relative->id_ << std::endl;
 
+                    if(relative->id_ == 65953)
+                        int adsadsadas = 0;
                     adjustDescendants(relative);
                 }
             }
@@ -499,13 +644,16 @@ void MTSerialCreator::adjustDescendants(MultiTreeNode *node) {
 
     while(!node_queue.empty()) {
         MultiTreeNode* curr_node = node_queue.front();
+        //std::cout << curr_node->id_ << std::endl;
+        if(curr_node->id_ == 69068)
+            int asd = 0;
         curr_node->level_ = curr_node->parent_->level_ + 1;
 
         std::vector<int> to_delete;
         for (int i = 0; i < curr_node->relatives_.size(); ++i) {
             MultiTreeNode* desc = curr_node->relatives_.at(i);
 
-            if(desc->level_ >= curr_node->level_) {
+            if(desc->level_ > curr_node->level_) {
                 desc->descendants_.erase(std::find(desc->descendants_.begin(),desc->descendants_.end(),curr_node));
                 desc->relatives_.push_back(curr_node);
                 curr_node->descendants_.push_back(desc);

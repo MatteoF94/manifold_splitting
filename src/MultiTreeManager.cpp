@@ -21,8 +21,11 @@
 #include <algorithm>
 #include <CGAL/bounding_box.h>
 #include <MTVisualizer.h>
+#include <core/multitree/SerialCreator.h>
 
-MultiTreeManager::MultiTreeManager() : chaining_type_(ChainingType::LTR), creation_type_(CreationType::SERIAL) {
+MultiTreeManager::MultiTreeManager() : chaining_type_(ChainingType::LTR), creation_type_(CreationType::SERIAL), with_adoptions_(false),
+                                       conduit_width_(2), conduit_depth_(5),
+                                       multiple_adoptions_(false), deep_adoption_(false) {
     visualizer_ = new MTVisualizer();
     serial_creator_ = new MTSerialCreator(this);
     parallel_creator_ = new MTParallelCreator(this);
@@ -168,16 +171,32 @@ void drawCube(GLFWwindow* window,std::vector<GLfloat> coords,std::vector<GLfloat
     alpha += 1;
 }
 
-void MultiTreeManager::setCreationType(MultiTreeManager::CreationType type) {
+void MultiTreeManager::setCreationModes(MultiTreeManager::CreationType type, bool with_adoption){
     creation_type_ = type;
+    with_adoptions_ = with_adoption;
 }
 
 void MultiTreeManager::configCreation(MultiTreeManager::ChainingType chaining) {
-    serial_creator_->configCreation(chaining);
+    serial_creator_->configCreation(chaining,with_adoptions_);
 }
 
 void MultiTreeManager::configCreation(MultiTreeManager::ChainingType body_chaining, MultiTreeManager::ChainingType tree_chaining) {
     parallel_creator_->configCreation(body_chaining,tree_chaining);
+}
+
+void MultiTreeManager::configAdoption(int width, int depth, bool multiple, bool deep) {
+    conduit_width_ = width;
+    conduit_depth_ = depth;
+    multiple_adoptions_ = multiple;
+    deep_adoption_ = deep;
+}
+
+void MultiTreeManager::chainTree(MultiTreeNode *root) {
+    parallel_creator_->chainTree(root);
+    if(!checkTreeIntegrity(root)) {
+        std::cout << "NOT CORRECT TREE" << std::endl;
+        exit(0);
+    }
 }
 
 MultiTreeNode* MultiTreeManager::meshToTree(Mesh mesh) {
@@ -185,12 +204,13 @@ MultiTreeNode* MultiTreeManager::meshToTree(Mesh mesh) {
     /*---- Convert mesh to dual ----*/
     Dual dual(mesh);
     FiniteDual finiteDual(dual, noborder<Mesh>(mesh));
-    MultiTreeNode* root = nullptr;
-
+    MultiTreeNode* root = new MultiTreeNode;
+    SerialCreator serialCreator;
     /*---- Create the tree ----*/
     switch(creation_type_) {
         case CreationType::SERIAL:
-            root = serial_creator_->createSerialTree(finiteDual);
+            //serialCreator.buildTree(mesh,root);
+            //root = serial_creator_->createSerialTree(finiteDual);
             break;
         case CreationType::PARALLEL:
             root = parallel_creator_->createParallelTree(finiteDual);
@@ -385,9 +405,8 @@ MultiTreeNode* MultiTreeManager::meshToTreeNormal(Mesh mesh, MultiTreeManager::C
     return root;
 }
 
-void MultiTreeManager::trimTree(MultiTreeNode *root) {
+void MultiTreeManager::treeAdoption(MultiTreeNode *root) {
     std::stack<MultiTreeNode*> depth_stack;
-
     depth_stack.emplace(root);
 
     while(!depth_stack.empty()) {
@@ -413,56 +432,197 @@ void MultiTreeManager::trimTree(MultiTreeNode *root) {
 
         depth_stack.pop();
 
-        /*if(children_count == 1 && curr_node->descendants_.size() == 1 && isChain(curr_node)) {
-                MultiTreeNode* descendant = curr_node->descendants_[0];
+        if(children_count == 1 && curr_node->descendants_.size() == 1 && isChannel(curr_node)) {
+            MultiTreeNode* descendant = curr_node->descendants_[0];
+            if(curr_node->level_ != descendant->level_) {
 
-                if(descendant->parent_->left_)
-                    descendant->parent_->left_ = nullptr;
+                if (!(descendant->parent_->left_ && descendant->parent_->right_)) {
 
-                if(descendant->parent_->right_)
-                    descendant->parent_->right_ = nullptr;
+                    if (descendant->parent_->left_)
+                        descendant->parent_->left_ = nullptr;
 
-                descendant->parent_ = curr_node;
+                    if (descendant->parent_->right_)
+                        descendant->parent_->right_ = nullptr;
 
-                if(!curr_node->left_)
-                    curr_node->left_ = descendant;
-                else
-                    curr_node->right_ = descendant;
+                    if(curr_node->level_ == descendant->parent_->level_) {
+                        descendant->parent_->descendants_.emplace_back(descendant);
+                        descendant->relatives_.emplace_back(descendant->parent_);
+                    }
+                    else {
+                        descendant->parent_->relatives_.emplace_back(descendant);
+                        descendant->descendants_.emplace_back(descendant->parent_);
+                    }
 
-                curr_node->descendants_.clear();
-                descendant->relatives_.erase(std::remove(descendant->relatives_.begin(),descendant->relatives_.end(),curr_node),descendant->relatives_.end());
+                    descendant->parent_ = curr_node;
 
-                if(descendant->parent_->left_ || descendant->parent_->right_ ) {
+                    if (!curr_node->left_) {
+                        curr_node->left_ = descendant;
+                        if (deep_adoption_)
+                            curr_children.emplace_back(descendant);
+                    } else {
+                        curr_node->right_ = descendant;
+                        if (deep_adoption_)
+                            curr_children.insert(curr_children.begin(), descendant);
+                    }
+
+                    curr_node->descendants_.clear();
+                    descendant->relatives_.erase(
+                            std::remove(descendant->relatives_.begin(), descendant->relatives_.end(), curr_node),
+                            descendant->relatives_.end());
 
                     adjustDescendants(descendant);
                 }
+            }
+
+            if(deep_adoption_) {
+                for(auto &elem : curr_children)
+                    depth_stack.push(elem);
+            }
+
         } else
             for(auto &elem : curr_children)
-                depth_stack.push(elem);*/
+                depth_stack.push(elem);
     }
 
+    /*if(!checkTreeIntegrity(root)) {
+        std::cout << "NOT CORRECT TREE" << std::endl;
+        exit(0);
+    }*/
+}
+
+bool MultiTreeManager::checkTreeIntegrity(MultiTreeNode *root) {
     std::queue<MultiTreeNode*> new_tree;
     new_tree.push(root);
     int count = 0;
     while(!new_tree.empty()) {
         MultiTreeNode* curr_node = new_tree.front();
+        int smol = 1;
 
-        if(curr_node->left_ != nullptr)
+        if(curr_node->left_ != nullptr) {
+            if(curr_node->left_->level_ != curr_node->level_ + 1)
+                return false;
             new_tree.push(curr_node->left_);
-        if(curr_node->right_ != nullptr)
+            ++smol;
+        }
+        if(curr_node->right_ != nullptr) {
+            if(curr_node->right_->level_ != curr_node->level_ + 1)
+                return false;
             new_tree.push(curr_node->right_);
-        if(curr_node->mid_ != nullptr)
+            ++smol;
+        }
+        if(curr_node->mid_ != nullptr) {
+            if(curr_node->mid_->level_ != curr_node->level_ + 1)
+                return false;
             new_tree.push(curr_node->mid_);
+        }
 
+        if(curr_node->next_)
+            if(curr_node->next_->level_ < curr_node->level_)
+                return false;
+        if(curr_node->prev_)
+            if(curr_node->prev_->level_ > curr_node->level_)
+                return false;
+
+        for(auto &desc : curr_node->descendants_) {
+            ++smol;
+            if (desc->level_ < curr_node->level_)
+                return false;
+        }
+
+        for(auto &rel : curr_node->relatives_) {
+            ++smol;
+            if (rel->level_ > curr_node->level_)
+                return false;
+        }
+
+        if(smol != 3)
+            return false;
         new_tree.pop();
         ++count;
-        if(!new_tree.empty()) {
-            curr_node->next_ = new_tree.front();
-            curr_node->next_->prev_ = curr_node;
-        }
     }
 
-    std::cout << "Num elements: " << count << std::endl;
+    if(count != 69666)
+        return false;
+
+    return true;
+}
+
+bool MultiTreeManager::isChannel(MultiTreeNode* node) {
+
+    if(!multiple_adoptions_ && node->is_adopted_)
+        return false;
+
+    std::queue<MultiTreeNode*> breadth_queue;
+    breadth_queue.emplace(node);
+    int curr_level = node->level_;
+    int count = 0;
+
+    while(!breadth_queue.empty()) {
+        MultiTreeNode* curr_node = breadth_queue.front();
+
+        if(curr_node->level_ - node->level_ >= conduit_depth_)
+            return true;
+
+        if(curr_node->level_ != curr_level) {
+            count = 0;
+            curr_level = curr_node->level_;
+        }
+
+        if(curr_node->left_) {
+            breadth_queue.emplace(curr_node->left_);
+            ++count;
+        }
+
+        if(curr_node->right_) {
+            breadth_queue.emplace(curr_node->right_);
+            ++count;
+        }
+
+        if(count > conduit_width_) return false;
+
+        breadth_queue.pop();
+    }
+
+    return false;
+}
+
+void MultiTreeManager::adjustDescendants(MultiTreeNode *node) {
+    //std::cout << "Adjusting" << std::endl;
+    std::queue<MultiTreeNode*> node_queue;
+    node_queue.emplace(node);
+
+    while(!node_queue.empty()) {
+        MultiTreeNode* curr_node = node_queue.front();
+
+        curr_node->level_ = curr_node->parent_->level_ + 1;
+        curr_node->is_adopted_ = true;
+
+        std::vector<int> to_delete;
+        for (int i = 0; i < curr_node->relatives_.size(); ++i) {
+            MultiTreeNode* relative = curr_node->relatives_[i];
+
+            if(relative->level_ >= curr_node->level_) {
+                relative->descendants_.erase(std::remove(relative->descendants_.begin(),relative->descendants_.end(),curr_node),relative->descendants_.end());
+                relative->relatives_.emplace_back(curr_node);
+                curr_node->descendants_.emplace_back(relative);
+                to_delete.emplace_back(i);
+            }
+        }
+
+        for (int elim : to_delete) {
+            curr_node->relatives_[elim] = curr_node->relatives_.back();
+            curr_node->relatives_.pop_back();
+        }
+
+        if(curr_node->left_)
+            node_queue.emplace(curr_node->left_);
+        if(curr_node->right_)
+            node_queue.emplace(curr_node->right_);
+        if(curr_node->mid_)
+            node_queue.emplace(curr_node->mid_);
+
+        node_queue.pop();
+    }
 }
 
 void MultiTreeManager::regenerateTree(std::vector<MultiTreeNode*>* tree_roots, std::vector<int> group_ids) {

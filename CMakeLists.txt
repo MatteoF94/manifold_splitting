@@ -27,7 +27,7 @@ include_directories(
         ${OPENGL_INCLUDE_DIRS}
 )
 
-add_subdirectory(test)
+add_subdirectory(examples)
 
 add_executable(manifold_splitting
         include/GraphParser.h

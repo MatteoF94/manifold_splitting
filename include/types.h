@@ -35,6 +35,14 @@ typedef boost::filtered_graph<Dual,noborder<Mesh>> FiniteDual;
 
 typedef boost::adjacency_list<boost::setS,boost::vecS,boost::undirectedS> Graph;
 
+enum class TreeConcatenationType {
+    LtR,
+    RtL,
+    Balanced,
+    Flipped,
+    DepthFirst
+};
+
 struct MultiTreeNode {
 
     boost::graph_traits<FiniteDual>::vertex_descriptor id_;
@@ -45,6 +53,7 @@ struct MultiTreeNode {
     bool valid_{true};
     bool propagated_{false};
     bool is_border_{false};
+    bool is_adopted_{false};
 
     MultiTreeNode* parent_ = nullptr;
     MultiTreeNode* left_ = nullptr;
