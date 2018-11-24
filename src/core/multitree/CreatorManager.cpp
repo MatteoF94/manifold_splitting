@@ -5,14 +5,17 @@
 #include "CreatorManager.h"
 #include <memory>
 #include "SerialCreator.h"
+#include "ParallelCreator.h"
+#include "Utilities.h"
 #include <spdlog/spdlog.h>
 
 CreatorManager::CreatorManager()  : creator_(new SerialCreator),
+                                    descendantsHandler_(new DescendantsHandler),
                                     adoptionHandler_(new AdoptionHandler),
                                     concatenator_(new Concatenator),
                                     stopwatch_(new Stopwatch),
                                     runtimeCreationMode_(CreationMode::Serial),
-                                    adoptionEnabled_(true)
+                                    adoptionEnabled_(false)
 {
 }
 
@@ -29,7 +32,7 @@ void CreatorManager::setCreationMode(CreationMode creationMode)
             runtimeCreationMode_ = CreationMode::Serial;
             break;
         case CreationMode::Parallel :
-            //creator_.reset(new ParallelCreator);
+            creator_ = std::make_unique<ParallelCreator>();
             runtimeCreationMode_ = CreationMode::Parallel;
             break;
     }
@@ -54,6 +57,7 @@ void CreatorManager::configConcatenator(ConcatenationType concatenationType)
 void CreatorManager::createMultiTree(Mesh &mesh, Node *const &root)
 {
     double elapsedTime = 0.0;
+    Utilities utilities;
 
     //TODO implement a way to select a custom initial node
     boost::graph_traits<FiniteDual>::vertex_descriptor initDsc = *mesh.faces_begin();
@@ -65,6 +69,27 @@ void CreatorManager::createMultiTree(Mesh &mesh, Node *const &root)
     elapsedTime = stopwatch_->stop();
     spdlog::info("CreatorManager::createMultiTree ---- finished building tree in {} seconds", elapsedTime);
 
+    if(runtimeCreationMode_ == CreationMode::Parallel)
+    {
+        if(!utilities.checkTreeIntegrity(root,mesh.num_faces()))
+        {
+            spdlog::critical("Tree has not been built correctly");
+            exit(0);
+        }
+
+        spdlog::info("CreatorManager::createMultiTree ---- adjusting descendants and relatives");
+        stopwatch_->start();
+        descendantsHandler_->adjustDescendantsAndRelatives(root);
+        elapsedTime = stopwatch_->stop();
+        spdlog::info("CreatorManager::createMultiTree ---- finished adjusting descendants and relatives in {} seconds", elapsedTime);
+
+        spdlog::info("CreatorManager::createMultiTree ---- concatenating nodes");
+        stopwatch_->start();
+        concatenator_->concatenateTree(root);
+        elapsedTime = stopwatch_->stop();
+        spdlog::info("CreatorManager::createMultiTree ---- finished concatenating nodes in {} seconds", elapsedTime);
+    }
+
     if(adoptionEnabled_)
     {
         spdlog::info("CreatorManager::createMultiTree ---- adopting branches");
@@ -73,14 +98,6 @@ void CreatorManager::createMultiTree(Mesh &mesh, Node *const &root)
         elapsedTime = stopwatch_->stop();
         spdlog::info("CreatorManager::createMultiTree ---- finished adopting branches in {} seconds", elapsedTime);
 
-        spdlog::info("CreatorManager::createMultiTree ---- concatenating nodes");
-        stopwatch_->start();
-        concatenator_->concatenateTree(root);
-        elapsedTime = stopwatch_->stop();
-        spdlog::info("CreatorManager::createMultiTree ---- finished concatenating nodes in {} seconds", elapsedTime);
-    }
-    else if(runtimeCreationMode_ == CreationMode::Parallel)
-    {
         spdlog::info("CreatorManager::createMultiTree ---- concatenating nodes");
         stopwatch_->start();
         concatenator_->concatenateTree(root);

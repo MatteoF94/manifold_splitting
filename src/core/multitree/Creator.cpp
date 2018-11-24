@@ -64,3 +64,30 @@ void Creator::buildTree(const Mesh &mesh, Node *const &root)
             break;
     }
 }
+
+/**
+ * @brief Set one of the current node descendant or relative, depending on the position.
+ */
+void Creator::insertNodeDescAndRels(Node *const &node, const CGAL::Face_around_face_iterator<Mesh> &neighbour, const std::vector<Node*> &treeNodes)
+{
+    if (node->parent_->id_ != *neighbour)
+    {
+        Node *relativeNode = treeNodes[*neighbour];
+
+        if(node->level_ > relativeNode->level_)
+        {
+            relativeNode->descendants_.push_back(node);
+            node->relatives_.emplace_back(relativeNode);
+        }
+
+        if(node->level_ == relativeNode->level_)
+        {
+            if (std::find(relativeNode->relatives_.begin(), relativeNode->relatives_.end(), node) ==
+                relativeNode->relatives_.end())
+            {
+                node->descendants_.emplace_back(relativeNode);
+                relativeNode->relatives_.emplace_back(node);
+            }
+        }
+    }
+}

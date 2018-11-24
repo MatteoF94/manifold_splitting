@@ -7,6 +7,7 @@
 
 #include "TreeTypes.h"
 #include "Creator.h"
+#include "DescendantsHandler.h"
 #include "AdoptionHandler.h"
 #include "Concatenator.h"
 #include "stopwatch.h"
@@ -27,6 +28,7 @@ public:
 private:
 
     std::unique_ptr<Creator> creator_;
+    std::unique_ptr<DescendantsHandler> descendantsHandler_;
     std::unique_ptr<AdoptionHandler> adoptionHandler_;
     std::unique_ptr<Concatenator> concatenator_;
 

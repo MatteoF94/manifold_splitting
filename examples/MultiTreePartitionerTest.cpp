@@ -3,7 +3,6 @@
 //
 #include <MultiTreePartitioner.h>
 #include <cstdio>
-#include <InputManager.h>
 #include <stopwatch.h>
 #include <fstream>
 #include <MultiTreeManager.h>
@@ -14,6 +13,8 @@
 #include <core/multitree/TreeTypes.h>
 #include <core/multitree/CreatorManager.h>
 #include <spdlog/spdlog.h>
+#include <io/InputManager.h>
+#include <io/InputDescriber.h>
 
 std::string selectMesh(int mesh_idx) {
 
@@ -56,7 +57,9 @@ int main (int argc, char* argv[]) {
     std::string input_filename = "../../data/Watermarking/" + selected_mesh + "/" + selected_mesh + ".off";
     //std::string input_filename("/home/matteo/Desktop/meshes/Castle.off");
 
-    InputManager input_manager;
+    //InputManager input_manager;
+            InputManager inputManager;
+
     MeshManager mesh_manager;
     MultiTreeManager tree_manager;
     std::unique_ptr<CreatorManager> creatorManager = std::make_unique<CreatorManager>();
@@ -65,21 +68,28 @@ int main (int argc, char* argv[]) {
     Stopwatch stopwatch;
     double elapsed_time, total_time = 0;
 
-    std::cout << "Reading mesh from .off file..." << std::endl;
+    spdlog::info("MAIN ---- reading mesh");
     stopwatch.start();
-    Mesh mesh = input_manager.readMeshFromOff(input_filename);
+    //Mesh mesh = input_manager.readMeshFromOff(input_filename);
+    Mesh mesh;
+    inputManager.readMeshFromOff(input_filename,mesh);
+    InputDescriber describer;
+    describer.describeMesh(mesh,InputDescriber::VerbosityLevel::High);
     elapsed_time = stopwatch.stop();
     total_time = total_time + elapsed_time;
+    spdlog::info("MAIN ---- mesh read in {} seconds", elapsed_time);
     std::cout << "DONE in " << elapsed_time << " seconds" << std::endl << std::endl;
 
+    creatorManager->setCreationMode(CreationMode::Parallel);
     creatorManager->createMultiTree(mesh,roota);
+
     int i = 0;
     while(roota) {
         ++i;
         roota = roota->next_;
     }
     std::cout << i << std::endl;
-    return 0;
+    exit(0);
 
     std::cout << "Converting mesh to multi level tree..." << std::endl;
     tree_manager.setCreationModes(MultiTreeManager::CreationType::SERIAL,true);
@@ -113,7 +123,7 @@ int main (int argc, char* argv[]) {
 //exit(0);
 
     MultiTreeNode* last = root;
-    int num_nodes = input_manager.getNumFaces();
+    int num_nodes = 5;//input_manager.getNumFaces();
 
     //exit(0);
             int col = 0;
@@ -185,7 +195,7 @@ int main (int argc, char* argv[]) {
 
     std::cout << "Writing the sub-meshes to .off files..." << std::endl;
     stopwatch.start();
-    input_manager.writeMeshToOff(meshes,std::string("../../data/Watermarking/" + selected_mesh + "/MTP/" + selected_mesh));
+    //input_manager.writeMeshToOff(meshes,std::string("../../data/Watermarking/" + selected_mesh + "/MTP/" + selected_mesh));
     //input_manager.writeMeshToOff(meshes,std::string("../../data/Castle/castle_mpt"));
     elapsed_time = stopwatch.stop();
     total_time = total_time + elapsed_time;

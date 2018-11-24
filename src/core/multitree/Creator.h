@@ -80,6 +80,14 @@ protected:
      */
     virtual void buildTreeFlipped(const Mesh &mesh, Node *const &root) = 0;
 
+    /**
+     * @brief Set one of the current node descendant or relative, depending on the position.
+     * @param node Current node in the tree.
+     * @param neighbour Index of the already inserted tree.
+     * @param treeNodes List of all the nodes inserted in the tree (some also not inserted).
+     */
+    void insertNodeDescAndRels(Node *const &node, const CGAL::Face_around_face_iterator<Mesh> &neighbour, const std::vector<Node*> &treeNodes);
+
     ConcatenationType concatenationType_; /** Indicates the way nodes are linked through prev and next. */
 };
 

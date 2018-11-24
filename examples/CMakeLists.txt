@@ -64,7 +64,8 @@ add_executable(MultiTreePartitionerTest
         ../src/core/multitree/SerialCreator.cpp
         ../src/core/multitree/SerialCreator.h
         ../src/core/multitree/Creator.cpp
-        ../src/core/multitree/Creator.h ../src/core/multitree/CreatorManager.cpp ../src/core/multitree/CreatorManager.h ../src/core/multitree/TreeTypes.h ../src/core/multitree/ParallelCreator.cpp ../src/core/multitree/ParallelCreator.h)
+        ../src/core/multitree/Creator.h ../src/core/multitree/CreatorManager.cpp ../src/core/multitree/CreatorManager.h ../src/core/multitree/TreeTypes.h ../src/core/multitree/ParallelCreator.cpp ../src/core/multitree/ParallelCreator.h
+        ../src/io/InputManager.cpp ../src/io/InputDescriber.cpp ../src/io/InputDescriber.h ../src/core/multitree/DescendantsHandler.cpp ../src/core/multitree/DescendantsHandler.h ../src/core/multitree/Utilities.cpp ../src/core/multitree/Utilities.h)
 
 add_executable(MultiTreePartitionerDFTest
         MultiTreePartitionerDFTest.cpp
